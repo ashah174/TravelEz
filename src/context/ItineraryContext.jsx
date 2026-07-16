@@ -33,7 +33,9 @@ export function ItineraryProvider({ children }) {
   const [favorites, setFavorites] = useState([]);
 
   useEffect(() => {
-    async function resetItineraries() {
+    let ignoreStaleResponse = false;
+
+    function resetItineraries() {
       setMyItineraries([]);
       setFavorites([]);
     }
@@ -46,7 +48,7 @@ export function ItineraryProvider({ children }) {
     async function fetchMyItineraries() {
       try {
         const response = await getMyItineraries();
-        setMyItineraries(response.data || []);
+        if (!ignoreStaleResponse) setMyItineraries(response.data || []);
       } catch (error) {
         console.error("Error loading itineraries:", error);
       }
@@ -55,7 +57,7 @@ export function ItineraryProvider({ children }) {
     async function fetchFavorites() {
       try {
         const response = await getFavoriteItineraries();
-        setFavorites(response.data || []);
+        if (!ignoreStaleResponse) setFavorites(response.data || []);
       } catch (error) {
         console.error("Error loading favorites:", error);
       }
@@ -63,6 +65,10 @@ export function ItineraryProvider({ children }) {
 
     fetchMyItineraries();
     fetchFavorites();
+
+    return () => {
+      ignoreStaleResponse = true;
+    };
   }, [user]);
 
   const addItinerary = (itinerary) => {
