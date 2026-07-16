@@ -47,6 +47,10 @@ async function requireAuth(req, res, next) {
   try {
     const decoded = await verifyIdToken(token);
 
+    if (!decoded.email) {
+      return res.status(401).json({ message: "Token is missing an email claim" });
+    }
+
     req.user = {
       uid: decoded.sub,
       email: decoded.email,
@@ -71,11 +75,9 @@ async function optionalAuth(req, res, next) {
   try {
     const decoded = await verifyIdToken(token);
 
-    req.user = {
-      uid: decoded.sub,
-      email: decoded.email,
-      name: decoded.name,
-    };
+    req.user = decoded.email
+      ? { uid: decoded.sub, email: decoded.email, name: decoded.name }
+      : null;
   } catch {
     req.user = null;
   }
