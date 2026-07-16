@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Itinerary = require("../models/Itinerary");
-const { requireAuth, requireAdmin } = require("../middleware/auth");
+const { requireAuth, optionalAuth, requireAdmin } = require("../middleware/auth");
 const { isAdminEmail } = require("../config/admins");
 
 const UPDATABLE_FIELDS = [
@@ -94,11 +94,19 @@ router.get("/favorites", requireAuth, async (req, res) => {
 });
 
 // GET one itinerary
-router.get("/:id", async (req, res) => {
+router.get("/:id", optionalAuth, async (req, res) => {
   try {
     const itinerary = await Itinerary.findById(req.params.id);
 
     if (!itinerary) {
+      return res.status(404).json({ message: "Itinerary not found" });
+    }
+
+    const isOwnerOrAdmin =
+      !!req.user &&
+      (itinerary.ownerEmail === req.user.email || isAdminEmail(req.user.email));
+
+    if (!itinerary.isPublic && !isOwnerOrAdmin) {
       return res.status(404).json({ message: "Itinerary not found" });
     }
 

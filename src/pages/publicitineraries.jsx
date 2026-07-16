@@ -3,6 +3,7 @@ import { Globe } from "lucide-react";
 import { Link } from "react-router-dom";
 import ItineraryCard from "../components/itinerarycard";
 import { getPublicItineraries } from "../services/api";
+import { useItineraries } from "../context/ItineraryContext";
 
 const communityItineraries = [
   {
@@ -35,6 +36,7 @@ const communityItineraries = [
 ];
 
 function PublicItineraries() {
+  const { deleteItinerary } = useItineraries();
   const [publicTrips, setPublicTrips] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -55,7 +57,8 @@ function PublicItineraries() {
 
   const [deletedIds, setDeletedIds] = useState([]);
 
-  const handleAdminDelete = (id) => {
+  const handleAdminDelete = async (id) => {
+    await deleteItinerary(id);
     setDeletedIds((prev) => [...prev, String(id)]);
   };
 

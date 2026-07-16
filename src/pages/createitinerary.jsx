@@ -44,6 +44,7 @@ function CreateItinerary({ editMode = false }) {
   });
 
   const [days, setDays] = useState([emptyDay()]);
+  const [isPublic, setIsPublic] = useState(false);
 
   useEffect(() => {
     const loadItinerary = async () => {
@@ -60,6 +61,8 @@ function CreateItinerary({ editMode = false }) {
           image: trip.image || "",
           description: trip.description || "",
         });
+
+        setIsPublic(trip.isPublic || false);
 
         setDays(
           trip.days?.length
@@ -107,7 +110,7 @@ function CreateItinerary({ editMode = false }) {
         form.image ||
         "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1",
       description: form.description,
-      isPublic: false,
+      isPublic: editMode ? isPublic : false,
       days: days.map((day, index) => ({
         dayNumber: index + 1,
         activities: day.activities,
