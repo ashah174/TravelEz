@@ -134,6 +134,29 @@ router.post("/", requireAuth, async (req, res) => {
   }
 });
 
+// CLAIM itinerary (only if it has no owner yet)
+router.post("/:id/claim", requireAuth, async (req, res) => {
+  try {
+    const itinerary = await Itinerary.findById(req.params.id);
+
+    if (!itinerary) {
+      return res.status(404).json({ message: "Itinerary not found" });
+    }
+
+    if (itinerary.ownerEmail) {
+      return res.status(409).json({ message: "Itinerary already has an owner" });
+    }
+
+    itinerary.ownerEmail = req.user.email;
+    const claimedItinerary = await itinerary.save();
+
+    res.json(claimedItinerary);
+  } catch (error) {
+    console.error("Error claiming itinerary:", error);
+    res.status(500).json({ message: "Error claiming itinerary" });
+  }
+});
+
 // UPDATE itinerary (owner or admin only)
 router.put("/:id", requireAuth, async (req, res) => {
   try {
