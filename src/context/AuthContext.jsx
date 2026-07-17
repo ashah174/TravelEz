@@ -10,6 +10,12 @@ const ADMIN_EMAILS = [
   "saachiraju@gmail.com"
 ];
 
+// Firebase UIDs for the same admins, used as a fallback for accounts whose
+// Google sign-in doesn't produce an email claim.
+const ADMIN_UIDS = [
+  "mNZ6TLxsCVXJsZ7hAqhKavsPmxt1", // ashah174@ucr.edu
+];
+
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
@@ -25,7 +31,9 @@ export function AuthProvider({ children }) {
   const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
   const logout = () => signOut(auth);
 
-  const isAdmin = user ? ADMIN_EMAILS.includes(user.email) : false;
+  const isAdmin = user
+    ? ADMIN_EMAILS.includes(user.email) || ADMIN_UIDS.includes(user.uid)
+    : false;
 
   return (
     <AuthContext.Provider value={{ user, signInWithGoogle, logout, isAdmin }}>

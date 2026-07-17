@@ -371,6 +371,10 @@ function ItineraryDetail() {
           comments.map((comment) => {
             const commentId = comment._id || comment.id;
             const isEditing = String(editingCommentId) === String(commentId);
+            const isCommentOwner =
+              !!user &&
+              (user.uid === comment.ownerUid ||
+                (!!comment.ownerEmail && user.email === comment.ownerEmail));
 
             return (
               <div className="comment" key={commentId}>
@@ -422,9 +426,9 @@ function ItineraryDetail() {
                     <p>{comment.text}</p>
                     <small>{new Date(comment.date).toLocaleDateString()}</small>
 
-                    {(user?.email === comment.ownerEmail || isAdmin) && (
+                    {(isCommentOwner || isAdmin) && (
                       <div className="comment-actions">
-                        {user?.email === comment.ownerEmail && (
+                        {isCommentOwner && (
                           <button
                             type="button"
                             onClick={() => startEditingComment(comment)}

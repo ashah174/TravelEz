@@ -34,9 +34,15 @@ const itinerarySchema = new mongoose.Schema(
       default: false,
     },
 
-    ownerEmail: {
+    ownerUid: {
       type: String,
       required: true,
+    },
+
+    // Best-effort display value; not guaranteed to be present since some
+    // Google sign-ins don't produce an email claim.
+    ownerEmail: {
+      type: String,
     },
 
     favoritedBy: {
@@ -53,6 +59,7 @@ const itinerarySchema = new mongoose.Schema(
           default: "Anonymous",
         },
 
+        ownerUid: String,
         ownerEmail: String,
 
         rating: {

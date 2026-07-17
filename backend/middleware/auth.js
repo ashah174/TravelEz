@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const jwksClient = require("jwks-rsa");
-const { isAdminEmail } = require("../config/admins");
+const { isAdminUser } = require("../config/admins");
 
 const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || "travelez-9c5ba";
 
@@ -47,13 +47,9 @@ async function requireAuth(req, res, next) {
   try {
     const decoded = await verifyIdToken(token);
 
-    if (!decoded.email) {
-      return res.status(401).json({ message: "Token is missing an email claim" });
-    }
-
     req.user = {
       uid: decoded.sub,
-      email: decoded.email,
+      email: decoded.email || null,
       name: decoded.name,
     };
 
@@ -75,8 +71,8 @@ async function optionalAuth(req, res, next) {
   try {
     const decoded = await verifyIdToken(token);
 
-    req.user = decoded.email
-      ? { uid: decoded.sub, email: decoded.email, name: decoded.name }
+    req.user = decoded.sub
+      ? { uid: decoded.sub, email: decoded.email || null, name: decoded.name }
       : null;
   } catch {
     req.user = null;
@@ -86,7 +82,7 @@ async function optionalAuth(req, res, next) {
 }
 
 function requireAdmin(req, res, next) {
-  if (!isAdminEmail(req.user?.email)) {
+  if (!isAdminUser(req.user)) {
     return res.status(403).json({ message: "Admin access required" });
   }
 
