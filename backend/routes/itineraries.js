@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Itinerary = require("../models/Itinerary");
 const { requireAuth, optionalAuth, requireAdmin } = require("../middleware/auth");
-const { isAdminEmail } = require("../config/admins");
+const { isAdminUser } = require("../config/admins");
 
 const UPDATABLE_FIELDS = [
   "title",
@@ -69,7 +69,7 @@ router.get("/search", async (req, res) => {
 router.get("/mine", requireAuth, async (req, res) => {
   try {
     const itineraries = await Itinerary.find({
-      ownerEmail: req.user.email,
+      ownerUid: req.user.uid,
     }).sort({ createdAt: -1 });
 
     res.json(itineraries);
@@ -83,7 +83,7 @@ router.get("/mine", requireAuth, async (req, res) => {
 router.get("/favorites", requireAuth, async (req, res) => {
   try {
     const itineraries = await Itinerary.find({
-      favoritedBy: req.user.email,
+      favoritedBy: req.user.uid,
     }).sort({ createdAt: -1 });
 
     res.json(itineraries);
@@ -104,7 +104,7 @@ router.get("/:id", optionalAuth, async (req, res) => {
 
     const isOwnerOrAdmin =
       !!req.user &&
-      (itinerary.ownerEmail === req.user.email || isAdminEmail(req.user.email));
+      (itinerary.ownerUid === req.user.uid || isAdminUser(req.user));
 
     if (!itinerary.isPublic && !isOwnerOrAdmin) {
       return res.status(404).json({ message: "Itinerary not found" });
@@ -122,7 +122,8 @@ router.post("/", requireAuth, async (req, res) => {
   try {
     const newItinerary = new Itinerary({
       ...req.body,
-      ownerEmail: req.user.email,
+      ownerUid: req.user.uid,
+      ownerEmail: req.user.email || undefined,
       favoritedBy: [],
     });
 
@@ -143,11 +144,12 @@ router.post("/:id/claim", requireAuth, async (req, res) => {
       return res.status(404).json({ message: "Itinerary not found" });
     }
 
-    if (itinerary.ownerEmail) {
+    if (itinerary.ownerUid) {
       return res.status(409).json({ message: "Itinerary already has an owner" });
     }
 
-    itinerary.ownerEmail = req.user.email;
+    itinerary.ownerUid = req.user.uid;
+    if (req.user.email) itinerary.ownerEmail = req.user.email;
     const claimedItinerary = await itinerary.save();
 
     res.json(claimedItinerary);
@@ -166,7 +168,7 @@ router.put("/:id", requireAuth, async (req, res) => {
       return res.status(404).json({ message: "Itinerary not found" });
     }
 
-    if (itinerary.ownerEmail !== req.user.email && !isAdminEmail(req.user.email)) {
+    if (itinerary.ownerUid !== req.user.uid && !isAdminUser(req.user)) {
       return res.status(403).json({ message: "Not authorized to update this itinerary" });
     }
 
@@ -189,7 +191,7 @@ router.delete("/:id", requireAuth, async (req, res) => {
       return res.status(404).json({ message: "Itinerary not found" });
     }
 
-    if (itinerary.ownerEmail !== req.user.email && !isAdminEmail(req.user.email)) {
+    if (itinerary.ownerUid !== req.user.uid && !isAdminUser(req.user)) {
       return res.status(403).json({ message: "Not authorized to delete this itinerary" });
     }
 
@@ -210,8 +212,8 @@ router.post("/:id/favorite", requireAuth, async (req, res) => {
       return res.status(404).json({ message: "Itinerary not found" });
     }
 
-    if (!itinerary.favoritedBy.includes(req.user.email)) {
-      itinerary.favoritedBy.push(req.user.email);
+    if (!itinerary.favoritedBy.includes(req.user.uid)) {
+      itinerary.favoritedBy.push(req.user.uid);
       await itinerary.save();
     }
 
@@ -232,7 +234,7 @@ router.delete("/:id/favorite", requireAuth, async (req, res) => {
     }
 
     itinerary.favoritedBy = itinerary.favoritedBy.filter(
-      (email) => email !== req.user.email
+      (uid) => uid !== req.user.uid
     );
 
     await itinerary.save();
@@ -256,7 +258,8 @@ router.post("/:id/comments", requireAuth, async (req, res) => {
 
     itinerary.comments.push({
       username: username || req.user.name || "Anonymous",
-      ownerEmail: req.user.email,
+      ownerUid: req.user.uid,
+      ownerEmail: req.user.email || undefined,
       rating,
       text,
       date: new Date(),
@@ -286,7 +289,7 @@ router.put("/:id/comments/:commentId", requireAuth, async (req, res) => {
       return res.status(404).json({ message: "Comment not found" });
     }
 
-    if (comment.ownerEmail !== req.user.email && !isAdminEmail(req.user.email)) {
+    if (comment.ownerUid !== req.user.uid && !isAdminUser(req.user)) {
       return res.status(403).json({ message: "Not authorized to update this comment" });
     }
 
@@ -314,7 +317,7 @@ router.delete("/:id/comments/:commentId", requireAuth, async (req, res) => {
       return res.status(404).json({ message: "Comment not found" });
     }
 
-    if (comment.ownerEmail !== req.user.email && !isAdminEmail(req.user.email)) {
+    if (comment.ownerUid !== req.user.uid && !isAdminUser(req.user)) {
       return res.status(403).json({ message: "Not authorized to delete this comment" });
     }
 
