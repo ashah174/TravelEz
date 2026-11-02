@@ -23,7 +23,7 @@ function Favorites() {
           </p>
           <div className="card-grid">
             {favorites.map((trip) => (
-              <ItineraryCard key={trip.id} itinerary={trip} />
+              <ItineraryCard key={trip._id || trip.id} itinerary={trip} />
               ))}
           </div>
         </>

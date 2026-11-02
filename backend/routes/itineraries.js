@@ -15,6 +15,15 @@ const UPDATABLE_FIELDS = [
   "days",
 ];
 
+function canViewItinerary(itinerary, user) {
+  if (itinerary.isPublic) return true;
+  return !!user && (itinerary.ownerUid === user.uid || isAdminUser(user));
+}
+
+function escapeRegex(text) {
+  return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function applyUpdatableFields(itinerary, body) {
   UPDATABLE_FIELDS.forEach((field) => {
     if (body[field] !== undefined) {
@@ -55,7 +64,7 @@ router.get("/search", async (req, res) => {
 
     const itineraries = await Itinerary.find({
       isPublic: true,
-      destination: { $regex: destination || "", $options: "i" },
+      destination: { $regex: escapeRegex(destination || ""), $options: "i" },
     });
 
     res.json(itineraries);
@@ -82,8 +91,11 @@ router.get("/mine", requireAuth, async (req, res) => {
 // GET itineraries favorited by the current user
 router.get("/favorites", requireAuth, async (req, res) => {
   try {
+    // A favorited trip may since have been made private; only return it if
+    // the requester can still see it.
     const itineraries = await Itinerary.find({
       favoritedBy: req.user.uid,
+      $or: [{ isPublic: true }, { ownerUid: req.user.uid }],
     }).sort({ createdAt: -1 });
 
     res.json(itineraries);
@@ -102,11 +114,7 @@ router.get("/:id", optionalAuth, async (req, res) => {
       return res.status(404).json({ message: "Itinerary not found" });
     }
 
-    const isOwnerOrAdmin =
-      !!req.user &&
-      (itinerary.ownerUid === req.user.uid || isAdminUser(req.user));
-
-    if (!itinerary.isPublic && !isOwnerOrAdmin) {
+    if (!canViewItinerary(itinerary, req.user)) {
       return res.status(404).json({ message: "Itinerary not found" });
     }
 
@@ -212,6 +220,10 @@ router.post("/:id/favorite", requireAuth, async (req, res) => {
       return res.status(404).json({ message: "Itinerary not found" });
     }
 
+    if (!canViewItinerary(itinerary, req.user)) {
+      return res.status(404).json({ message: "Itinerary not found" });
+    }
+
     if (!itinerary.favoritedBy.includes(req.user.uid)) {
       itinerary.favoritedBy.push(req.user.uid);
       await itinerary.save();
@@ -252,7 +264,7 @@ router.post("/:id/comments", requireAuth, async (req, res) => {
 
     const itinerary = await Itinerary.findById(req.params.id);
 
-    if (!itinerary) {
+    if (!itinerary || !canViewItinerary(itinerary, req.user)) {
       return res.status(404).json({ message: "Itinerary not found" });
     }
 

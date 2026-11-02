@@ -5,35 +5,6 @@ import ItineraryCard from "../components/itinerarycard";
 import { getPublicItineraries } from "../services/api";
 import { useItineraries } from "../context/ItineraryContext";
 
-const communityItineraries = [
-  {
-    id: 1,
-    title: "5 Days in Paris",
-    destination: "Paris, France",
-    duration: 5,
-    cost: 1200,
-    rating: 4.8,
-    image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34",
-  },
-  {
-    id: 2,
-    title: "Japan Food Tour",
-    destination: "Tokyo, Japan",
-    duration: 7,
-    cost: 1800,
-    rating: 4.9,
-    image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf",
-  },
-  {
-    id: 3,
-    title: "Budget Weekend in NYC",
-    destination: "New York City",
-    duration: 3,
-    cost: 600,
-    rating: 4.5,
-    image: "https://images.unsplash.com/photo-1490644658840-3f2e3f8c5625",
-  },
-];
 
 function PublicItineraries() {
   const { deleteItinerary } = useItineraries();
@@ -62,7 +33,7 @@ function PublicItineraries() {
     setDeletedIds((prev) => [...prev, String(id)]);
   };
 
-  const allPublic = [...publicTrips, ...communityItineraries].filter(
+  const allPublic = publicTrips.filter(
     (trip) => !deletedIds.includes(String(trip._id || trip.id))
   );
 

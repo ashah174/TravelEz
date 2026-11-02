@@ -3,48 +3,90 @@ import { Link } from "react-router-dom";
 import { ShieldCheck, ArrowRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useItineraries } from "../context/ItineraryContext";
+import { getMyProfile, updateMyProfile } from "../services/api";
 import ItineraryCard from "../components/itinerarycard";
+
+const EMPTY_PROFILE = { name: "", image: "", preferences: "" };
+
+function legacyProfileKey(user) {
+  return `${user.email}_profile`;
+}
+
+function readLegacyProfile(user) {
+  try {
+    const stored = JSON.parse(localStorage.getItem(legacyProfileKey(user)));
+    if (!stored) return null;
+    return {
+      name: stored.name || "",
+      image: stored.image || "",
+      preferences: stored.preferences || "",
+    };
+  } catch {
+    return null;
+  }
+}
+
+function clearLegacyProfile(user) {
+  try {
+    localStorage.removeItem(legacyProfileKey(user));
+  } catch {
+    // Ignore storage errors; the profile is already saved on the server.
+  }
+}
 
 function Profile() {
   const { user, signInWithGoogle, logout, isAdmin } = useAuth();
   const { myItineraries, favorites } = useItineraries();
 
-  const getProfileKey = () => {
-    return user ? `${user.email}_profile` : "guest_profile";
-  };
-
-  const defaultProfile = {
-    name: user?.displayName || "",
-    email: user?.email || "",
-    image: user?.photoURL || "",
-    preferences: "Budget-friendly, cultural trips, food tours, city exploring",
-    uploaded: "",
-    saved: "",
-  };
-
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState(defaultProfile);
+  const [profile, setProfile] = useState(EMPTY_PROFILE);
+  const [draft, setDraft] = useState(EMPTY_PROFILE);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
+    // Signed-out visitors see the sign-in prompt, so there's nothing to load.
+    if (!user) return;
+
+    let ignore = false;
+
     const loadProfile = async () => {
-      if (!user) return;
+      try {
+        const response = await getMyProfile();
+        let saved = response.data;
 
-      const savedProfile =
-        JSON.parse(localStorage.getItem(`${user.email}_profile`)) || {};
+        // One-time move of a profile that older versions kept in localStorage.
+        const legacy = readLegacyProfile(user);
+        if (!saved.exists && legacy) {
+          const migrated = await updateMyProfile(legacy);
+          saved = migrated.data;
+          clearLegacyProfile(user);
+        }
 
-      setProfile({
-        name: savedProfile.name || user.displayName || "",
-        email: savedProfile.email || user.email || "",
-        image: savedProfile.image || user.photoURL || "",
-        preferences:
-          savedProfile.preferences ||
-          "Budget-friendly, cultural trips, food tours, city exploring",
-        uploaded: savedProfile.uploaded || "",
-        saved: savedProfile.saved || "",
-      });
+        if (ignore) return;
+
+        setProfile({
+          name: saved.name || user.displayName || "",
+          image: saved.image || user.photoURL || "",
+          preferences: saved.preferences || "",
+        });
+      } catch (loadError) {
+        console.error("Error loading profile:", loadError);
+        if (!ignore) {
+          setProfile({
+            name: user.displayName || "",
+            image: user.photoURL || "",
+            preferences: "",
+          });
+        }
+      }
     };
 
     loadProfile();
+
+    return () => {
+      ignore = true;
+    };
   }, [user]);
 
   if (!user) {
@@ -62,15 +104,36 @@ function Profile() {
   }
 
   const handleChange = (e) => {
-    setProfile({
-      ...profile,
+    setDraft({
+      ...draft,
       [e.target.name]: e.target.value,
     });
   };
 
-  const saveProfile = () => {
-    localStorage.setItem(getProfileKey(), JSON.stringify(profile));
-    setIsEditing(false);
+  const startEditing = () => {
+    setDraft(profile);
+    setError("");
+    setIsEditing(true);
+  };
+
+  const saveProfile = async () => {
+    setSaving(true);
+    setError("");
+
+    try {
+      const response = await updateMyProfile(draft);
+      setProfile({
+        name: response.data.name || user.displayName || "",
+        image: response.data.image || user.photoURL || "",
+        preferences: response.data.preferences || "",
+      });
+      setIsEditing(false);
+    } catch (saveError) {
+      console.error("Error saving profile:", saveError);
+      setError("Couldn't save your profile. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -90,7 +153,7 @@ function Profile() {
               <input
                 type="text"
                 name="image"
-                value={profile.image}
+                value={draft.image}
                 onChange={handleChange}
               />
             </label>
@@ -100,17 +163,7 @@ function Profile() {
               <input
                 type="text"
                 name="name"
-                value={profile.name}
-                onChange={handleChange}
-              />
-            </label>
-
-            <label>
-              Email
-              <input
-                type="email"
-                name="email"
-                value={profile.email}
+                value={draft.name}
                 onChange={handleChange}
               />
             </label>
@@ -119,13 +172,20 @@ function Profile() {
               Travel Preferences
               <textarea
                 name="preferences"
-                value={profile.preferences}
+                placeholder="Ex: Budget-friendly, cultural trips, food tours"
+                value={draft.preferences}
                 onChange={handleChange}
               />
             </label>
 
-            <button className="edit-profile-btn" onClick={saveProfile}>
-              Save Changes
+            {error && <p style={{ color: "#e11d48" }}>{error}</p>}
+
+            <button
+              className="edit-profile-btn"
+              onClick={saveProfile}
+              disabled={saving}
+            >
+              {saving ? "Saving..." : "Save Changes"}
             </button>
 
             <button
@@ -138,10 +198,10 @@ function Profile() {
         ) : (
           <>
             <h1>{profile.name}</h1>
-            <p>Email: {profile.email}</p>
+            {user.email && <p>Email: {user.email}</p>}
 
             <h2>Travel Preferences</h2>
-            <p>{profile.preferences}</p>
+            <p>{profile.preferences || "No travel preferences added yet."}</p>
 
             {isAdmin && (
               <p
@@ -198,7 +258,7 @@ function Profile() {
 
             <button
               className="edit-profile-btn"
-              onClick={() => setIsEditing(true)}
+              onClick={startEditing}
             >
               Edit Profile
             </button>
