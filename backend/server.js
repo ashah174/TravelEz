@@ -4,6 +4,7 @@ const cors = require("cors");
 require("dotenv").config({ path: require("path").join(__dirname, ".env") });
 
 const itineraryRoutes = require("./routes/itineraries");
+const userRoutes = require("./routes/users");
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use(
 app.use(express.json());
 
 app.use("/api/itineraries", itineraryRoutes);
+app.use("/api/users", userRoutes);
 
 app.get("/", (req, res) => {
   res.send("TravelEz backend is running");

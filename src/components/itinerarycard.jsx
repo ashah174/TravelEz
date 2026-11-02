@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Heart, Star, Trash2 } from "lucide-react";
 import { useItineraries } from "../context/ItineraryContext";
 import { useAuth } from "../context/AuthContext";
+import { getAverageRating, formatRating } from "../utils/rating";
 
 function ItineraryCard({ itinerary, onDelete }) {
   const { toggleFavorite, isFavorited, deleteItinerary } = useItineraries();
@@ -20,15 +21,7 @@ function ItineraryCard({ itinerary, onDelete }) {
 
   const duration = itinerary.duration || itinerary.days?.length || 0;
 
-  const comments = itinerary.comments || [];
-
-  const averageRating =
-    comments.length > 0
-      ? (
-          comments.reduce((sum, comment) => sum + Number(comment.rating), 0) /
-          comments.length
-        ).toFixed(1)
-      : itinerary.rating;
+  const averageRating = formatRating(getAverageRating(itinerary));
 
   return (
     <div className="itinerary-card">

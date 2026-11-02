@@ -1,39 +1,43 @@
+import { useEffect, useState } from "react";
 import ItineraryCard from "../components/itinerarycard";
 import { Link } from "react-router-dom";
 import { PlusCircle, Search, Heart, Sparkles } from "lucide-react";
 import logo from "../images/travelezlogo.jpg";
+import { getPublicItineraries } from "../services/api";
+import { sortTrips } from "../utils/rating";
 
-const sampleItineraries = [
-  {
-    id: 1,
-    title: "5 Days in Paris",
-    destination: "Paris, France",
-    duration: 5,
-    cost: 1200,
-    rating: 4.8,
-    image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34",
-  },
-  {
-    id: 2,
-    title: "Japan Food Tour",
-    destination: "Tokyo, Japan",
-    duration: 7,
-    cost: 1800,
-    rating: 4.9,
-    image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf",
-  },
-  {
-    id: 3,
-    title: "Budget Weekend in NYC",
-    destination: "New York City",
-    duration: 3,
-    cost: 600,
-    rating: 4.5,
-    image: "https://images.unsplash.com/photo-1490644658840-3f2e3f8c5625",
-  },
-];
+const RECOMMENDED_COUNT = 6;
+
 
 function Home() {
+  const [recommended, setRecommended] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let ignore = false;
+
+    const loadRecommended = async () => {
+      try {
+        const response = await getPublicItineraries();
+        if (!ignore) {
+          setRecommended(
+            sortTrips(response.data || [], "rating").slice(0, RECOMMENDED_COUNT)
+          );
+        }
+      } catch (error) {
+        console.error("Error loading recommended itineraries:", error);
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+
+    loadRecommended();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
   return (
     <div className="page">
       <section className="hero exciting-hero">
@@ -86,11 +90,20 @@ function Home() {
         <Sparkles size={22} className="star-icon" /> Recommended Itineraries
       </h2>
 
-      <div className="card-grid">
-        {sampleItineraries.map((trip) => (
-          <ItineraryCard key={trip.id} itinerary={trip} />
-        ))}
-      </div>
+      {loading ? (
+        <p>Loading itineraries...</p>
+      ) : recommended.length > 0 ? (
+        <div className="card-grid">
+          {recommended.map((trip) => (
+            <ItineraryCard key={trip._id} itinerary={trip} />
+          ))}
+        </div>
+      ) : (
+        <p className="public-hint">
+          No public itineraries yet. <Link to="/create">Create one</Link> and
+          share it to see it here.
+        </p>
+      )}
     </div>
   );
 }

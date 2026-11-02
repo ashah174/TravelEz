@@ -19,7 +19,7 @@ export const getPublicItineraries = () => API.get("/itineraries/public");
 export const getMyItineraries = () => API.get("/itineraries/mine");
 export const getFavoriteItineraries = () => API.get("/itineraries/favorites");
 export const searchItineraries = (destination) =>
-  API.get(`/itineraries/search?destination=${destination}`);
+  API.get("/itineraries/search", { params: { destination } });
 export const getItineraryById = (id) => API.get(`/itineraries/${id}`);
 export const createItinerary = (data) => API.post("/itineraries", data);
 export const updateItinerary = (id, data) => API.put(`/itineraries/${id}`, data);
@@ -35,5 +35,7 @@ export const deleteCommentFromItinerary = (id, commentId) =>
 export const updateItineraryPrivacy = (id, isPublic) =>
   API.put(`/itineraries/${id}`, { isPublic });
 
+export const getMyProfile = () => API.get("/users/me");
+export const updateMyProfile = (data) => API.put("/users/me", data);
 
 export default API;

@@ -3,36 +3,8 @@ import { useLocation } from "react-router-dom";
 import ItineraryCard from "../components/itinerarycard";
 import { searchItineraries } from "../services/api";
 import { useItineraries } from "../context/ItineraryContext";
+import { sortTrips } from "../utils/rating";
 
-const communityItineraries = [
-  {
-    id: 1,
-    title: "5 Days in Paris",
-    destination: "Paris, France",
-    duration: 5,
-    cost: 1200,
-    rating: 4.8,
-    image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34",
-  },
-  {
-    id: 2,
-    title: "Japan Food Tour",
-    destination: "Tokyo, Japan",
-    duration: 7,
-    cost: 1800,
-    rating: 4.9,
-    image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf",
-  },
-  {
-    id: 3,
-    title: "Budget Weekend in NYC",
-    destination: "New York City",
-    duration: 3,
-    cost: 600,
-    rating: 4.5,
-    image: "https://images.unsplash.com/photo-1490644658840-3f2e3f8c5625",
-  },
-];
 
 function SearchResults() {
   const location = useLocation();
@@ -81,34 +53,14 @@ function SearchResults() {
       })
     : myItineraries;
 
-  const sampleResults = search
-    ? communityItineraries.filter((trip) => {
-        const title = trip.title?.toLowerCase() || "";
-        const tripDest = trip.destination?.toLowerCase() || "";
-        return title.includes(search) || tripDest.includes(search);
-      })
-    : communityItineraries;
-
   const dbIds = new Set(dbResults.map((t) => String(t._id || t.id)));
-  const localIds = new Set(localResults.map((t) => String(t._id || t.id)));
 
   const combined = [
     ...dbResults,
     ...localResults.filter((t) => !dbIds.has(String(t._id || t.id))),
-    ...sampleResults.filter((t) => !dbIds.has(String(t.id)) && !localIds.has(String(t.id))),
   ];
 
-  const sorted = [...combined].sort((a, b) => {
-    if (sortBy === "rating") {
-      const ratingA = a.rating || 0;
-      const ratingB = b.rating || 0;
-      return ratingB - ratingA;
-    }
-    if (sortBy === "cost") {
-      return (a.cost || 0) - (b.cost || 0);
-    }
-    return 0;
-  });
+  const sorted = sortTrips(combined, sortBy);
 
   return (
     <div className="page">

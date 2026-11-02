@@ -9,57 +9,8 @@ import {
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { useItineraries } from "../context/ItineraryContext";
+import { getAverageRating, formatRating } from "../utils/rating";
 
-const sampleItineraries = [
-  {
-    id: 1,
-    title: "5 Days in Paris",
-    destination: "Paris, France",
-    duration: 5,
-    cost: 1200,
-    rating: 4.8,
-    image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34",
-    description: "A classic Paris trip with sightseeing, food, and museums.",
-    days: [
-      { activities: "Visit the Eiffel Tower, walk around the Seine, and try a local café." },
-      { activities: "Explore the Louvre Museum and nearby restaurants." },
-      { activities: "Visit Montmartre, Sacré-Cœur, and local shops." },
-    ],
-    comments: [],
-  },
-  {
-    id: 2,
-    title: "Japan Food Tour",
-    destination: "Tokyo, Japan",
-    duration: 7,
-    cost: 1800,
-    rating: 4.9,
-    image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf",
-    description: "A food-focused Tokyo itinerary with markets, ramen, sushi, and city exploring.",
-    days: [
-      { activities: "Explore Shibuya, visit food stalls, and try ramen." },
-      { activities: "Visit Tsukiji Outer Market and try sushi." },
-      { activities: "Explore Harajuku, cafés, and street snacks." },
-    ],
-    comments: [],
-  },
-  {
-    id: 3,
-    title: "Budget Weekend in NYC",
-    destination: "New York City",
-    duration: 3,
-    cost: 600,
-    rating: 4.5,
-    image: "https://images.unsplash.com/photo-1490644658840-3f2e3f8c5625",
-    description: "A short NYC weekend trip focused on affordable sights, food, and walking routes.",
-    days: [
-      { activities: "Walk through Central Park and visit Times Square." },
-      { activities: "Explore Brooklyn Bridge, DUMBO, and local pizza spots." },
-      { activities: "Visit museums, food carts, and free city viewpoints." },
-    ],
-    comments: [],
-  },
-];
 
 function ItineraryDetail() {
   const { id } = useParams();
@@ -77,23 +28,7 @@ function ItineraryDetail() {
   const [editRating, setEditRating] = useState("");
   const [editComment, setEditComment] = useState("");
 
-  const isSampleTrip = ["1", "2", "3"].includes(String(id));
-
   useEffect(() => {
-    const sampleTrip = sampleItineraries.find(
-      (trip) => String(trip.id) === String(id)
-    );
-
-    const applySampleTrip = async () => {
-      setItinerary(sampleTrip);
-      setLoading(false);
-    };
-
-    if (sampleTrip) {
-      applySampleTrip();
-      return;
-    }
-
     const loadItinerary = async () => {
       try {
         const response = await getItineraryById(id);
@@ -121,11 +56,6 @@ function ItineraryDetail() {
       text: newComment.trim(),
       username: user?.displayName || "Anonymous",
     };
-
-    if (isSampleTrip) {
-      alert("This is a demo itinerary,comments won't be saved. Go to public itineraries to leave comments and check out trips");
-      return;
-    }
 
     try {
       const response = await addCommentToItinerary(id, commentData);
@@ -160,42 +90,21 @@ function ItineraryDetail() {
       text: editComment.trim(),
     };
 
-    if (isSampleTrip) {
-      setItinerary((prev) => ({
-        ...prev,
-        comments: prev.comments.map((comment) =>
-          String(comment._id || comment.id) === String(commentId)
-            ? { ...comment, ...updatedCommentData }
-            : comment
-        ),
-      }));
-    } else {
-      try {
-        const response = await updateCommentOnItinerary(
-          id,
-          commentId,
-          updatedCommentData
-        );
-        setItinerary(response.data);
-      } catch (error) {
-        console.error("Error updating comment:", error);
-      }
+    try {
+      const response = await updateCommentOnItinerary(
+        id,
+        commentId,
+        updatedCommentData
+      );
+      setItinerary(response.data);
+    } catch (error) {
+      console.error("Error updating comment:", error);
     }
 
     cancelEditingComment();
   };
 
   const handleDeleteComment = async (commentId) => {
-    if (isSampleTrip) {
-      setItinerary((prev) => ({
-        ...prev,
-        comments: prev.comments.filter(
-          (comment) => String(comment._id || comment.id) !== String(commentId)
-        ),
-      }));
-      return;
-    }
-
     try {
       const response = await deleteCommentFromItinerary(id, commentId);
       setItinerary(response.data);
@@ -226,13 +135,7 @@ function ItineraryDetail() {
 
   const comments = itinerary.comments || [];
 
-  const averageRating =
-    comments.length > 0
-      ? (
-          comments.reduce((sum, comment) => sum + Number(comment.rating), 0) /
-          comments.length
-        ).toFixed(1)
-      : itinerary.rating;
+  const averageRating = formatRating(getAverageRating(itinerary));
 
   const duration = itinerary.duration || itinerary.days?.length || 0;
 
