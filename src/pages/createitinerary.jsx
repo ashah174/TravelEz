@@ -9,7 +9,6 @@ import {
   PlusCircle,
   MapPin,
   DollarSign,
-  Image,
   Utensils,
   Bus,
   BedDouble,
@@ -19,6 +18,9 @@ import {
   Trash2,
 } from "lucide-react";
 import { useItineraries } from "../context/ItineraryContext";
+import ImageUpload from "../components/imageupload";
+import TagPicker from "../components/tagpicker";
+import { DEFAULT_TRIP_IMAGE } from "../utils/images";
 
 const emptyDay = () => ({
   activities: "",
@@ -45,6 +47,7 @@ function CreateItinerary({ editMode = false }) {
 
   const [days, setDays] = useState([emptyDay()]);
   const [isPublic, setIsPublic] = useState(false);
+  const [tags, setTags] = useState([]);
 
   useEffect(() => {
     const loadItinerary = async () => {
@@ -63,6 +66,7 @@ function CreateItinerary({ editMode = false }) {
         });
 
         setIsPublic(trip.isPublic || false);
+        setTags(trip.tags || []);
 
         setDays(
           trip.days?.length
@@ -106,10 +110,9 @@ function CreateItinerary({ editMode = false }) {
       destination: form.destination,
       duration: days.length,
       cost: Number(form.cost) || 0,
-      image:
-        form.image ||
-        "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1",
+      image: form.image || DEFAULT_TRIP_IMAGE,
       description: form.description,
+      tags,
       isPublic: editMode ? isPublic : false,
       days: days.map((day, index) => ({
         dayNumber: index + 1,
@@ -206,19 +209,10 @@ function CreateItinerary({ editMode = false }) {
           </div>
         </label>
 
-        <label>
-          Cover Image URL
-          <div className="input-icon">
-            <Image size={20} />
-            <input
-              type="text"
-              name="image"
-              placeholder="Paste an image URL (optional)"
-              value={form.image}
-              onChange={handleChange}
-            />
-          </div>
-        </label>
+        <ImageUpload
+          value={form.image}
+          onChange={(image) => setForm((prev) => ({ ...prev, image }))}
+        />
 
         <label>
           Trip Overview
@@ -230,6 +224,11 @@ function CreateItinerary({ editMode = false }) {
             onChange={handleChange}
           ></textarea>
         </label>
+
+        <div className="tag-field">
+          <span className="image-upload-label">Tags</span>
+          <TagPicker selected={tags} onChange={setTags} />
+        </div>
 
         <div className="form-section-label" style={{ marginTop: "12px" }}>
           Day-by-Day Schedule

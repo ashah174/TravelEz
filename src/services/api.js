@@ -18,8 +18,11 @@ export const getItineraries = () => API.get("/itineraries");
 export const getPublicItineraries = () => API.get("/itineraries/public");
 export const getMyItineraries = () => API.get("/itineraries/mine");
 export const getFavoriteItineraries = () => API.get("/itineraries/favorites");
-export const searchItineraries = (destination) =>
-  API.get("/itineraries/search", { params: { destination } });
+// params: { q, tags, minCost, maxCost, minDays, maxDays, sort, page, limit }
+// Resolves with { results, total, page, pages }.
+export const searchItineraries = (params) =>
+  API.get("/itineraries/search", { params });
+export const copyItinerary = (id) => API.post(`/itineraries/${id}/copy`);
 export const getItineraryById = (id) => API.get(`/itineraries/${id}`);
 export const createItinerary = (data) => API.post("/itineraries", data);
 export const updateItinerary = (id, data) => API.put(`/itineraries/${id}`, data);
@@ -37,5 +40,7 @@ export const updateItineraryPrivacy = (id, isPublic) =>
 
 export const getMyProfile = () => API.get("/users/me");
 export const updateMyProfile = (data) => API.put("/users/me", data);
+export const syncMyProfile = () => API.post("/users/me/sync");
+export const getUserProfile = (uid) => API.get(`/users/${encodeURIComponent(uid)}`);
 
 export default API;

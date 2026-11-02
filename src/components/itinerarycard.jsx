@@ -3,30 +3,35 @@ import { Heart, Star, Trash2 } from "lucide-react";
 import { useItineraries } from "../context/ItineraryContext";
 import { useAuth } from "../context/AuthContext";
 import { getAverageRating, formatRating } from "../utils/rating";
+import { DEFAULT_TRIP_IMAGE, optimizedImageUrl } from "../utils/images";
 
-function ItineraryCard({ itinerary, onDelete }) {
+const MAX_CARD_TAGS = 3;
+
+function ItineraryCard({ itinerary, onDelete, showAuthor = true }) {
   const { toggleFavorite, isFavorited, deleteItinerary } = useItineraries();
   const { isAdmin } = useAuth();
 
   const tripId = itinerary._id || itinerary.id;
   const favorited = isFavorited(tripId);
 
-  const image =
-    itinerary.image ||
-    itinerary.imageUrl ||
-    "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1";
+  const image = optimizedImageUrl(
+    itinerary.image || itinerary.imageUrl || DEFAULT_TRIP_IMAGE,
+    640
+  );
 
   const destination =
-    itinerary.destination || itinerary.location || "Unknown destination";
+    itinerary.destination || itinerary.location?.label || "Unknown destination";
 
   const duration = itinerary.duration || itinerary.days?.length || 0;
 
   const averageRating = formatRating(getAverageRating(itinerary));
+  const author = itinerary.author;
+  const tags = itinerary.tags || [];
 
   return (
     <div className="itinerary-card">
       <div className="card-image-wrap">
-        <img src={image} alt={destination} />
+        <img src={image} alt={destination} loading="lazy" />
 
         <button
           className={`heart-btn ${favorited ? "heart-btn--active" : ""}`}
@@ -40,6 +45,28 @@ function ItineraryCard({ itinerary, onDelete }) {
       <div className="card-content">
         <h3>{itinerary.title}</h3>
         <p>{destination}</p>
+
+        {showAuthor && author?.uid && (
+          <p className="card-author">
+            by{" "}
+            <Link to={`/u/${author.uid}`}>{author.name || "TravelEz traveler"}</Link>
+          </p>
+        )}
+
+        {tags.length > 0 && (
+          <div className="tag-list">
+            {tags.slice(0, MAX_CARD_TAGS).map((tag) => (
+              <span key={tag} className="tag-chip tag-chip--static">
+                {tag}
+              </span>
+            ))}
+            {tags.length > MAX_CARD_TAGS && (
+              <span className="tag-chip tag-chip--static">
+                +{tags.length - MAX_CARD_TAGS}
+              </span>
+            )}
+          </div>
+        )}
 
         {duration > 0 && (
           <p>

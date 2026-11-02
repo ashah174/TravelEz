@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Star, Trash2 } from "lucide-react";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { Copy, Star, Trash2 } from "lucide-react";
 import {
+  copyItinerary,
   getItineraryById,
   addCommentToItinerary,
   updateCommentOnItinerary,
@@ -10,13 +11,18 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { useItineraries } from "../context/ItineraryContext";
 import { getAverageRating, formatRating } from "../utils/rating";
+import { optimizedImageUrl } from "../utils/images";
+
+const TripMap = lazy(() => import("../components/tripmap"));
 
 
 function ItineraryDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAdmin, user } = useAuth();
-  const { deleteItinerary } = useItineraries();
+  const { isAdmin, user, signInWithGoogle } = useAuth();
+  const { deleteItinerary, addItinerary } = useItineraries();
+  const [copying, setCopying] = useState(false);
+  const [copyError, setCopyError] = useState("");
 
   const [itinerary, setItinerary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -139,6 +145,34 @@ function ItineraryDetail() {
 
   const duration = itinerary.duration || itinerary.days?.length || 0;
 
+  const isOwner = !!user && user.uid === itinerary.ownerUid;
+  const author = itinerary.author;
+  const hasLocation =
+    Number.isFinite(itinerary.location?.lat) && Number.isFinite(itinerary.location?.lng);
+
+  const handleCopy = async () => {
+    if (!user) {
+      try {
+        await signInWithGoogle();
+      } catch {
+        return;
+      }
+    }
+
+    setCopying(true);
+    setCopyError("");
+
+    try {
+      const response = await copyItinerary(id);
+      addItinerary(response.data);
+      navigate(`/edit-itinerary/${response.data._id}`);
+    } catch (error) {
+      console.error("Error copying itinerary:", error);
+      setCopyError("Couldn't copy this itinerary. Please try again.");
+      setCopying(false);
+    }
+  };
+
   const handleAdminDelete = () => {
     deleteItinerary(id);
     navigate("/");
@@ -156,6 +190,41 @@ function ItineraryDetail() {
         <h1>{itinerary.title}</h1>
         <p className="subtitle">{itinerary.destination}</p>
 
+        {author?.uid && (
+          <p className="card-author">
+            by{" "}
+            <Link to={`/u/${author.uid}`}>{author.name || "TravelEz traveler"}</Link>
+          </p>
+        )}
+
+        {itinerary.tags?.length > 0 && (
+          <div className="tag-list">
+            {itinerary.tags.map((tag) => (
+              <Link
+                key={tag}
+                to={`/results?tags=${encodeURIComponent(tag)}`}
+                className="tag-chip tag-chip--static"
+              >
+                {tag}
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {!isOwner && (
+          <div className="detail-actions">
+            <button
+              type="button"
+              className="copy-trip-btn"
+              onClick={handleCopy}
+              disabled={copying}
+            >
+              <Copy size={16} /> {copying ? "Copying..." : "Copy to my trips"}
+            </button>
+            {copyError && <p className="form-error">{copyError}</p>}
+          </div>
+        )}
+
         {averageRating && (
           <p className="detail-rating icon-text">
             <Star size={20} className="star-icon" fill="#c9a87c" /> {averageRating}
@@ -164,7 +233,7 @@ function ItineraryDetail() {
 
         {itinerary.image && (
           <img
-            src={itinerary.image}
+            src={optimizedImageUrl(itinerary.image, 1200)}
             alt={itinerary.title}
             style={{
               width: "100%",
@@ -180,6 +249,15 @@ function ItineraryDetail() {
           <>
             <h2>Trip Overview</h2>
             <p>{itinerary.description}</p>
+          </>
+        )}
+
+        {hasLocation && (
+          <>
+            <h2>Where</h2>
+            <Suspense fallback={<div className="trip-map trip-map--loading">Loading map...</div>}>
+              <TripMap location={itinerary.location} title={itinerary.destination} />
+            </Suspense>
           </>
         )}
 

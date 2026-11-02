@@ -4,6 +4,8 @@ import { ShieldCheck, ArrowRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useItineraries } from "../context/ItineraryContext";
 import { getMyProfile, updateMyProfile } from "../services/api";
+import ImageUpload from "../components/imageupload";
+import { optimizedImageUrl } from "../utils/images";
 import ItineraryCard from "../components/itinerarycard";
 
 const EMPTY_PROFILE = { name: "", image: "", preferences: "" };
@@ -16,11 +18,16 @@ function readLegacyProfile(user) {
   try {
     const stored = JSON.parse(localStorage.getItem(legacyProfileKey(user)));
     if (!stored) return null;
-    return {
-      name: stored.name || "",
-      image: stored.image || "",
-      preferences: stored.preferences || "",
-    };
+
+    // Only carry over fields the user actually filled in, so we never blank
+    // out values already saved on the server.
+    const legacy = {};
+    ["name", "image", "preferences"].forEach((field) => {
+      if (typeof stored[field] === "string" && stored[field].trim()) {
+        legacy[field] = stored[field];
+      }
+    });
+    return legacy;
   } catch {
     return null;
   }
@@ -52,16 +59,15 @@ function Profile() {
 
     const loadProfile = async () => {
       try {
-        const response = await getMyProfile();
-        let saved = response.data;
-
         // One-time move of a profile that older versions kept in localStorage.
         const legacy = readLegacyProfile(user);
-        if (!saved.exists && legacy) {
-          const migrated = await updateMyProfile(legacy);
-          saved = migrated.data;
+        if (legacy) {
+          await updateMyProfile(legacy);
           clearLegacyProfile(user);
         }
+
+        const response = await getMyProfile();
+        const saved = response.data;
 
         if (ignore) return;
 
@@ -141,22 +147,19 @@ function Profile() {
       <div className="profile-card">
         <img
           className="profile-img"
-          src={profile.image}
+          src={optimizedImageUrl(profile.image, 240)}
           alt={profile.name}
           referrerPolicy="no-referrer"
         />
 
         {isEditing ? (
           <>
-            <label>
-              Profile Picture URL
-              <input
-                type="text"
-                name="image"
-                value={draft.image}
-                onChange={handleChange}
-              />
-            </label>
+            <ImageUpload
+              label="Profile picture"
+              maxSize={600}
+              value={draft.image}
+              onChange={(image) => setDraft((prev) => ({ ...prev, image }))}
+            />
 
             <label>
               Name
@@ -199,6 +202,11 @@ function Profile() {
           <>
             <h1>{profile.name}</h1>
             {user.email && <p>Email: {user.email}</p>}
+            <p>
+              <Link to={`/u/${user.uid}`} className="icon-text">
+                View your public profile <ArrowRight size={14} />
+              </Link>
+            </p>
 
             <h2>Travel Preferences</h2>
             <p>{profile.preferences || "No travel preferences added yet."}</p>
