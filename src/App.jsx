@@ -9,6 +9,7 @@ import FindItinerary from "./pages/finditinerary";
 import Favorites from "./pages/favorites";
 import MyItineraries from "./pages/myitineraries";
 import PublicItineraries from "./pages/publicitineraries";
+import UserProfile from "./pages/userprofile";
 import { AuthProvider } from "./context/AuthContext";
 import { ItineraryProvider } from "./context/ItineraryContext";
 import "./App.css";
@@ -31,6 +32,7 @@ function App() {
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/my-itineraries" element={<MyItineraries />} />
             <Route path="/public" element={<PublicItineraries />} />
+            <Route path="/u/:uid" element={<UserProfile />} />
             <Route path="/edit-itinerary/:id" element={<CreateItinerary editMode={true} />} />
           </Routes>
         </Router>

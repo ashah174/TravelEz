@@ -51,6 +51,7 @@ async function requireAuth(req, res, next) {
       uid: decoded.sub,
       email: decoded.email || null,
       name: decoded.name,
+      picture: decoded.picture,
     };
 
     next();
@@ -72,7 +73,12 @@ async function optionalAuth(req, res, next) {
     const decoded = await verifyIdToken(token);
 
     req.user = decoded.sub
-      ? { uid: decoded.sub, email: decoded.email || null, name: decoded.name }
+      ? {
+          uid: decoded.sub,
+          email: decoded.email || null,
+          name: decoded.name,
+          picture: decoded.picture,
+        }
       : null;
   } catch {
     req.user = null;

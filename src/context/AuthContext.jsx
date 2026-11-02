@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
 import { auth, googleProvider } from "../firebase";
+import { syncMyProfile } from "../services/api";
 
 const ADMIN_EMAILS = [
   "akankshdivyananda@gmail.com",
@@ -24,6 +25,13 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+
+      // Make sure the user has a profile so their name shows on their trips.
+      if (currentUser) {
+        syncMyProfile().catch((error) =>
+          console.error("Error syncing profile:", error)
+        );
+      }
     });
     return unsubscribe;
   }, []);

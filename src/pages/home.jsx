@@ -3,8 +3,7 @@ import ItineraryCard from "../components/itinerarycard";
 import { Link } from "react-router-dom";
 import { PlusCircle, Search, Heart, Sparkles } from "lucide-react";
 import logo from "../images/travelezlogo.jpg";
-import { getPublicItineraries } from "../services/api";
-import { sortTrips } from "../utils/rating";
+import { searchItineraries } from "../services/api";
 
 const RECOMMENDED_COUNT = 6;
 
@@ -18,12 +17,11 @@ function Home() {
 
     const loadRecommended = async () => {
       try {
-        const response = await getPublicItineraries();
-        if (!ignore) {
-          setRecommended(
-            sortTrips(response.data || [], "rating").slice(0, RECOMMENDED_COUNT)
-          );
-        }
+        const response = await searchItineraries({
+          sort: "rating",
+          limit: RECOMMENDED_COUNT,
+        });
+        if (!ignore) setRecommended(response.data.results || []);
       } catch (error) {
         console.error("Error loading recommended itineraries:", error);
       } finally {

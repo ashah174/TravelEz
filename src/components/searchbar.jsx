@@ -8,16 +8,15 @@ function SearchBar() {
   const handleSearch = (e) => {
     e.preventDefault();
 
-    if (query.trim() !== "") {
-      navigate(`/results?destination=${encodeURIComponent(query)}`);
-    }
+    const text = query.trim();
+    navigate(text ? `/results?q=${encodeURIComponent(text)}` : "/results");
   };
 
   return (
     <form className="search-bar" onSubmit={handleSearch}>
       <input
         type="text"
-        placeholder="Search by destination..."
+        placeholder="Search destinations, titles, or keywords..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />

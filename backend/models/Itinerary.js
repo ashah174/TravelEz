@@ -52,6 +52,24 @@ const itinerarySchema = new mongoose.Schema(
 
     days: [daySchema],
 
+    tags: {
+      type: [String],
+      default: [],
+    },
+
+    // Filled in by the server from the destination (OpenStreetMap geocoding).
+    location: {
+      lat: Number,
+      lng: Number,
+      label: String,
+    },
+
+    // Set when this itinerary was created with "Copy to my trips".
+    copiedFrom: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Itinerary",
+    },
+
     comments: [
       {
         username: {
