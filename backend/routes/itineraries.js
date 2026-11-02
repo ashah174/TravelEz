@@ -5,7 +5,7 @@ const { requireAuth, optionalAuth, requireAdmin } = require("../middleware/auth"
 const { isAdminUser } = require("../config/admins");
 const { sanitizeTags } = require("../config/tags");
 const { geocodeDestination } = require("../utils/geocode");
-const { attachAuthors, attachAuthor } = require("../utils/authors");
+const { presentItineraries, presentItinerary } = require("../utils/present");
 
 const UPDATABLE_FIELDS = [
   "title",
@@ -56,15 +56,35 @@ async function updateLocation(itinerary) {
   itinerary.location = (await geocodeDestination(itinerary.destination)) || undefined;
 }
 
+const MAX_REVIEW_LENGTH = 2000;
+
+// Returns { rating, text } or { error } for a review request body.
+function parseReview(body) {
+  const rating = Number(body?.rating);
+  const text = typeof body?.text === "string" ? body.text.trim() : "";
+
+  if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+    return { error: "Rating must be between 1 and 5." };
+  }
+  if (!text) {
+    return { error: "Please write a comment with your rating." };
+  }
+  if (text.length > MAX_REVIEW_LENGTH) {
+    return { error: `Reviews can be at most ${MAX_REVIEW_LENGTH} characters.` };
+  }
+
+  return { rating: Math.round(rating * 10) / 10, text };
+}
+
 async function sendItinerary(res, itinerary, status = 200) {
-  res.status(status).json(await attachAuthor(itinerary));
+  res.status(status).json(await presentItinerary(itinerary));
 }
 
 // GET all itineraries (admin only)
 router.get("/", requireAuth, requireAdmin, async (req, res) => {
   try {
     const itineraries = await Itinerary.find().sort({ createdAt: -1 });
-    res.json(await attachAuthors(itineraries));
+    res.json(await presentItineraries(itineraries));
   } catch (error) {
     console.error("Error getting itineraries:", error);
     res.status(500).json({ message: "Error getting itineraries" });
@@ -78,7 +98,7 @@ router.get("/public", async (req, res) => {
       createdAt: -1,
     });
 
-    res.json(await attachAuthors(itineraries));
+    res.json(await presentItineraries(itineraries));
   } catch (error) {
     console.error("Error fetching public itineraries:", error);
     res.status(500).json({ message: "Error fetching public itineraries" });
@@ -154,7 +174,7 @@ router.get("/search", async (req, res) => {
     const total = result.total[0]?.count || 0;
 
     res.json({
-      results: await attachAuthors(result.results),
+      results: await presentItineraries(result.results),
       total,
       page,
       pages: Math.max(Math.ceil(total / limit), 1),
@@ -172,7 +192,7 @@ router.get("/mine", requireAuth, async (req, res) => {
       ownerUid: req.user.uid,
     }).sort({ createdAt: -1 });
 
-    res.json(await attachAuthors(itineraries));
+    res.json(await presentItineraries(itineraries));
   } catch (error) {
     console.error("Error getting your itineraries:", error);
     res.status(500).json({ message: "Error getting your itineraries" });
@@ -189,7 +209,7 @@ router.get("/favorites", requireAuth, async (req, res) => {
       $or: [{ isPublic: true }, { ownerUid: req.user.uid }],
     }).sort({ createdAt: -1 });
 
-    res.json(await attachAuthors(itineraries));
+    res.json(await presentItineraries(itineraries));
   } catch (error) {
     console.error("Error getting favorite itineraries:", error);
     res.status(500).json({ message: "Error getting favorite itineraries" });
@@ -388,13 +408,30 @@ router.delete("/:id/favorite", requireAuth, async (req, res) => {
 // ADD comment
 router.post("/:id/comments", requireAuth, async (req, res) => {
   try {
-    const { rating, text, username } = req.body;
+    const review = parseReview(req.body);
+    if (review.error) {
+      return res.status(400).json({ message: review.error });
+    }
 
     const itinerary = await Itinerary.findById(req.params.id);
 
     if (!itinerary || !canViewItinerary(itinerary, req.user)) {
       return res.status(404).json({ message: "Itinerary not found" });
     }
+
+    if (itinerary.ownerUid === req.user.uid) {
+      return res.status(403).json({ message: "You can't review your own itinerary." });
+    }
+
+    if (itinerary.comments.some((comment) => comment.ownerUid === req.user.uid)) {
+      return res.status(409).json({
+        message: "You've already reviewed this itinerary. Edit your review instead.",
+      });
+    }
+
+    const { rating, text } = review;
+    const username =
+      typeof req.body.username === "string" ? req.body.username.trim().slice(0, 100) : "";
 
     itinerary.comments.push({
       username: username || req.user.name || "Anonymous",
@@ -416,7 +453,11 @@ router.post("/:id/comments", requireAuth, async (req, res) => {
 // UPDATE comment (author or admin only)
 router.put("/:id/comments/:commentId", requireAuth, async (req, res) => {
   try {
-    const { rating, text } = req.body;
+    const review = parseReview(req.body);
+    if (review.error) {
+      return res.status(400).json({ message: review.error });
+    }
+    const { rating, text } = review;
 
     const itinerary = await Itinerary.findById(req.params.id);
     if (!itinerary) {

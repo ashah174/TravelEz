@@ -1,16 +1,31 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Menu, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 function Navbar() {
   const { user, signInWithGoogle, logout } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <nav className="navbar">
-      <Link to="/" className="logo">
+    <nav className={`navbar ${menuOpen ? "navbar--open" : ""}`}>
+      <Link to="/" className="logo" onClick={() => setMenuOpen(false)}>
         TravelEz
       </Link>
 
-      <div className="nav-links">
+      <button
+        type="button"
+        className="nav-toggle"
+        onClick={() => setMenuOpen((open) => !open)}
+        aria-expanded={menuOpen}
+        aria-controls="nav-links"
+        aria-label={menuOpen ? "Close menu" : "Open menu"}
+      >
+        {menuOpen ? <X size={26} /> : <Menu size={26} />}
+      </button>
+
+      {/* Clicking any link or button inside closes the mobile menu. */}
+      <div id="nav-links" className="nav-links" onClick={() => setMenuOpen(false)}>
         <Link to="/">Home</Link>
         <Link to="/search">Search</Link>
         <Link to="/public">Public Itineraries</Link>

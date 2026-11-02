@@ -1487,3 +1487,172 @@ a.tag-chip--static:hover {
   color: white;
   font-size: 0.75rem;
 }
+
+/* ── Reviews ──────────────────────────────────────────────── */
+.review-notice {
+  background: #eef6f0;
+  padding: 18px 22px;
+  border-radius: 16px;
+  margin: 18px 0 28px;
+  color: #3d6140;
+}
+
+.review-notice p {
+  margin: 0 0 12px;
+}
+
+.review-notice .btn-signin {
+  margin-left: 0;
+  background: #527a56;
+  color: white;
+}
+
+.review-notice .btn-signin:hover {
+  background: #3d6140;
+}
+
+/* ── Responsive layout ────────────────────────────────────── */
+.nav-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  padding: 4px;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.card-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+}
+
+img {
+  max-width: 100%;
+}
+
+/* Collapse the navbar into a menu before the links run out of room. */
+@media (max-width: 960px) {
+  .navbar {
+    flex-wrap: wrap;
+    padding: 14px 20px;
+  }
+
+  .nav-toggle {
+    display: block;
+  }
+
+  .nav-links {
+    display: none;
+    flex-basis: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    padding-top: 12px;
+  }
+
+  .navbar--open .nav-links {
+    display: flex;
+  }
+
+  .nav-links a {
+    margin-left: 0;
+    padding: 10px 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .nav-links .btn-signin,
+  .nav-links .btn-signout {
+    margin: 10px 0 4px;
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 20px 16px;
+  }
+
+  .hero,
+  .exciting-hero {
+    padding: 32px 18px;
+    margin-bottom: 28px;
+  }
+
+  .exciting-hero h1,
+  .hero h1 {
+    font-size: 2.1rem;
+    overflow-wrap: anywhere;
+  }
+
+  .exciting-hero h1 span {
+    border-bottom-width: 4px;
+  }
+
+  .hero-logo {
+    width: 130px;
+    height: 130px;
+  }
+
+  .hero-actions {
+    gap: 12px;
+  }
+
+  .hero-btn {
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 14px 18px;
+  }
+
+  .search-bar {
+    display: flex;
+    gap: 8px;
+  }
+
+  .search-bar input {
+    width: auto;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .search-bar button {
+    margin-left: 0;
+  }
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .filters button {
+    margin-left: 0;
+  }
+
+  .detail-card,
+  .profile-card,
+  .itinerary-form {
+    padding: 22px 18px;
+  }
+
+  .search-panel-row > .search-panel-toggle,
+  .search-panel-row > .search-panel-submit {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .my-itineraries-header {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .my-card-actions,
+  .my-card-meta,
+  .comment-actions {
+    flex-wrap: wrap;
+  }
+
+  h1 {
+    overflow-wrap: anywhere;
+  }
+}

@@ -29,6 +29,9 @@ function ItineraryDetail() {
 
   const [newRating, setNewRating] = useState("");
   const [newComment, setNewComment] = useState("");
+  const [reviewError, setReviewError] = useState("");
+  const [editError, setEditError] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editRating, setEditRating] = useState("");
@@ -63,21 +66,29 @@ function ItineraryDetail() {
       username: user?.displayName || "Anonymous",
     };
 
+    setSubmittingReview(true);
+    setReviewError("");
+
     try {
       const response = await addCommentToItinerary(id, commentData);
       setItinerary(response.data);
+      setNewRating("");
+      setNewComment("");
     } catch (error) {
       console.error("Error adding comment:", error);
+      setReviewError(
+        error.response?.data?.message || "Couldn't post your review. Please try again."
+      );
+    } finally {
+      setSubmittingReview(false);
     }
-
-    setNewRating("");
-    setNewComment("");
   };
 
   const startEditingComment = (comment) => {
     setEditingCommentId(comment._id || comment.id);
     setEditRating(String(comment.rating));
     setEditComment(comment.text);
+    setEditError("");
   };
 
   const cancelEditingComment = () => {
@@ -103,11 +114,13 @@ function ItineraryDetail() {
         updatedCommentData
       );
       setItinerary(response.data);
+      cancelEditingComment();
     } catch (error) {
       console.error("Error updating comment:", error);
+      setEditError(
+        error.response?.data?.message || "Couldn't save your review. Please try again."
+      );
     }
-
-    cancelEditingComment();
   };
 
   const handleDeleteComment = async (commentId) => {
@@ -146,6 +159,8 @@ function ItineraryDetail() {
   const duration = itinerary.duration || itinerary.days?.length || 0;
 
   const isOwner = !!user && user.uid === itinerary.ownerUid;
+  const hasReviewed =
+    !!user && comments.some((comment) => comment.ownerUid === user.uid);
   const author = itinerary.author;
   const hasLocation =
     Number.isFinite(itinerary.location?.lat) && Number.isFinite(itinerary.location?.lng);
@@ -317,6 +332,23 @@ function ItineraryDetail() {
 
         <h2>Ratings & Comments</h2>
 
+        {!user ? (
+          <div className="review-notice">
+            <p>Sign in to rate and review this itinerary.</p>
+            <button type="button" className="btn-signin" onClick={signInWithGoogle}>
+              Sign in with Google
+            </button>
+          </div>
+        ) : isOwner ? (
+          <p className="review-notice">
+            This is your itinerary, so you can't review it. Reviews from other
+            travelers will show up here.
+          </p>
+        ) : hasReviewed ? (
+          <p className="review-notice">
+            You've reviewed this itinerary. You can edit or delete your review below.
+          </p>
+        ) : (
         <form className="comment-form" onSubmit={handleAddComment}>
           <label>
             Rating
@@ -343,8 +375,13 @@ function ItineraryDetail() {
             />
           </label>
 
-          <button type="submit">Submit Review</button>
+          {reviewError && <p className="form-error">{reviewError}</p>}
+
+          <button type="submit" disabled={submittingReview}>
+            {submittingReview ? "Posting..." : "Submit Review"}
+          </button>
         </form>
+        )}
 
         {comments.length === 0 ? (
           <p>No comments yet. Be the first to leave a review!</p>
@@ -352,10 +389,7 @@ function ItineraryDetail() {
           comments.map((comment) => {
             const commentId = comment._id || comment.id;
             const isEditing = String(editingCommentId) === String(commentId);
-            const isCommentOwner =
-              !!user &&
-              (user.uid === comment.ownerUid ||
-                (!!comment.ownerEmail && user.email === comment.ownerEmail));
+            const isCommentOwner = !!user && user.uid === comment.ownerUid;
 
             return (
               <div className="comment" key={commentId}>
@@ -381,6 +415,8 @@ function ItineraryDetail() {
                         onChange={(e) => setEditComment(e.target.value)}
                       />
                     </label>
+
+                    {editError && <p className="form-error">{editError}</p>}
 
                     <div className="comment-actions">
                       <button
