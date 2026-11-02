@@ -3,7 +3,7 @@ const router = express.Router();
 const User = require("../models/User");
 const Itinerary = require("../models/Itinerary");
 const { requireAuth } = require("../middleware/auth");
-const { attachAuthors } = require("../utils/authors");
+const { presentItineraries } = require("../utils/present");
 
 const PROFILE_FIELDS = ["name", "image", "preferences"];
 
@@ -93,7 +93,7 @@ router.get("/:uid", async (req, res) => {
 
     res.json({
       profile: toProfile(user || { uid: req.params.uid }),
-      itineraries: await attachAuthors(itineraries),
+      itineraries: await presentItineraries(itineraries),
       stats: {
         tripCount: itineraries.length,
         reviewCount: ratings.length,
