@@ -10,6 +10,7 @@ const SORT_OPTIONS = [
   { value: "recent", label: "Most Recent" },
   { value: "rating", label: "Highest Rated" },
   { value: "popular", label: "Most Favorited" },
+  { value: "copied", label: "Most Copied" },
   { value: "cost", label: "Lowest Cost" },
 ];
 

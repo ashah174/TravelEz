@@ -1,19 +1,22 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Heart, MapPinned, Star } from "lucide-react";
+import { Copy, Heart, MapPinned, Star, UserCheck, UserPlus, Users } from "lucide-react";
 import ItineraryCard from "../components/itinerarycard";
-import { getUserProfile } from "../services/api";
+import { followUser, getUserProfile, unfollowUser } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { formatRating } from "../utils/rating";
 import { optimizedImageUrl } from "../utils/images";
 
 function UserProfile() {
   const { uid } = useParams();
-  const { user } = useAuth();
+  const { user, signInWithGoogle } = useAuth();
+  const viewerUid = user?.uid;
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [followBusy, setFollowBusy] = useState(false);
+  const [followError, setFollowError] = useState("");
 
   useEffect(() => {
     let ignore = false;
@@ -41,7 +44,8 @@ function UserProfile() {
     return () => {
       ignore = true;
     };
-  }, [uid]);
+    // Reloads once sign-in resolves, since isFollowing depends on the viewer.
+  }, [uid, viewerUid]);
 
   if (loading) {
     return (
@@ -68,6 +72,28 @@ function UserProfile() {
   const name = profile.name || "TravelEz traveler";
   const isMe = user?.uid === uid;
   const averageRating = formatRating(stats.averageRating);
+  const isFollowing = data.isFollowing;
+
+  const handleFollowClick = async () => {
+    setFollowBusy(true);
+    setFollowError("");
+
+    try {
+      const response = await (isFollowing ? unfollowUser(uid) : followUser(uid));
+      setData((current) => ({
+        ...current,
+        isFollowing: response.data.following,
+        stats: { ...current.stats, followerCount: response.data.followerCount },
+      }));
+    } catch (error) {
+      console.error("Error updating follow:", error);
+      setFollowError(
+        error.response?.data?.message || "Couldn't update that. Please try again."
+      );
+    } finally {
+      setFollowBusy(false);
+    }
+  };
 
   return (
     <div className="page">
@@ -87,7 +113,34 @@ function UserProfile() {
 
         <h1>{name}</h1>
 
+        {!isMe &&
+          (user ? (
+            <button
+              type="button"
+              className={`follow-btn ${isFollowing ? "follow-btn--active" : ""}`}
+              onClick={handleFollowClick}
+              disabled={followBusy}
+              aria-pressed={isFollowing}
+            >
+              {isFollowing ? <UserCheck size={16} /> : <UserPlus size={16} />}
+              {isFollowing ? "Following" : "Follow"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="follow-btn"
+              onClick={() => signInWithGoogle().catch(() => {})}
+            >
+              <UserPlus size={16} /> Sign in to follow
+            </button>
+          ))}
+        {followError && <p className="form-error">{followError}</p>}
+
         <div className="profile-stats">
+          <span className="icon-text">
+            <Users size={16} /> {stats.followerCount} follower
+            {stats.followerCount !== 1 ? "s" : ""} · {stats.followingCount} following
+          </span>
           <span className="icon-text">
             <MapPinned size={16} /> {stats.tripCount} public trip
             {stats.tripCount !== 1 ? "s" : ""}
@@ -102,6 +155,12 @@ function UserProfile() {
             <Heart size={16} /> {stats.favoriteCount} favorite
             {stats.favoriteCount !== 1 ? "s" : ""}
           </span>
+          {stats.copyCount > 0 && (
+            <span className="icon-text">
+              <Copy size={16} /> Copied {stats.copyCount} time
+              {stats.copyCount !== 1 ? "s" : ""}
+            </span>
+          )}
         </div>
 
         {profile.preferences && (

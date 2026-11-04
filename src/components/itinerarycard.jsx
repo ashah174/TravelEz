@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
-import { Heart, Star, Trash2 } from "lucide-react";
+import { Copy, Heart, Star, Trash2 } from "lucide-react";
 import { useItineraries } from "../context/ItineraryContext";
 import { useAuth } from "../context/AuthContext";
 import { getAverageRating, formatRating } from "../utils/rating";
 import { DEFAULT_TRIP_IMAGE, optimizedImageUrl } from "../utils/images";
+import { tagPath } from "../constants/tags";
 
 const MAX_CARD_TAGS = 3;
 
@@ -27,6 +28,7 @@ function ItineraryCard({ itinerary, onDelete, showAuthor = true }) {
   const averageRating = formatRating(getAverageRating(itinerary));
   const author = itinerary.author;
   const tags = itinerary.tags || [];
+  const copyCount = itinerary.copyCount || 0;
 
   return (
     <div className="itinerary-card">
@@ -56,9 +58,9 @@ function ItineraryCard({ itinerary, onDelete, showAuthor = true }) {
         {tags.length > 0 && (
           <div className="tag-list">
             {tags.slice(0, MAX_CARD_TAGS).map((tag) => (
-              <span key={tag} className="tag-chip tag-chip--static">
+              <Link key={tag} to={tagPath(tag)} className="tag-chip tag-chip--static">
                 {tag}
-              </span>
+              </Link>
             ))}
             {tags.length > MAX_CARD_TAGS && (
               <span className="tag-chip tag-chip--static">
@@ -81,6 +83,12 @@ function ItineraryCard({ itinerary, onDelete, showAuthor = true }) {
         {averageRating && (
           <p className="icon-text">
             <Star size={15} className="star-icon" fill="#c9a87c" /> {averageRating}
+          </p>
+        )}
+
+        {copyCount > 0 && (
+          <p className="icon-text">
+            <Copy size={15} /> Copied {copyCount} time{copyCount !== 1 ? "s" : ""}
           </p>
         )}
 

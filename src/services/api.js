@@ -42,5 +42,13 @@ export const getMyProfile = () => API.get("/users/me");
 export const updateMyProfile = (data) => API.put("/users/me", data);
 export const syncMyProfile = () => API.post("/users/me/sync");
 export const getUserProfile = (uid) => API.get(`/users/${encodeURIComponent(uid)}`);
+export const followUser = (uid) => API.post(`/users/${encodeURIComponent(uid)}/follow`);
+export const unfollowUser = (uid) =>
+  API.delete(`/users/${encodeURIComponent(uid)}/follow`);
+export const getFollowing = () => API.get("/users/me/following");
+export const getFeed = (limit = 6) => API.get("/itineraries/feed", { params: { limit } });
+export const getTagCounts = () => API.get("/itineraries/tags");
+// Resolves with { lat, lng, label }; 404 when the place can't be found.
+export const geocodePlace = (q, near) => API.get("/geocode", { params: { q, near } });
 
 export default API;

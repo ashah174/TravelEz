@@ -16,10 +16,14 @@ import {
   Footprints,
   Plus,
   Trash2,
+  Camera,
 } from "lucide-react";
 import { useItineraries } from "../context/ItineraryContext";
+import { useAuth } from "../context/AuthContext";
 import ImageUpload from "../components/imageupload";
 import TagPicker from "../components/tagpicker";
+import DayPhotosEditor from "../components/dayphotoseditor";
+import DayPlacesEditor from "../components/dayplaceseditor";
 import { DEFAULT_TRIP_IMAGE } from "../utils/images";
 
 const emptyDay = () => ({
@@ -28,12 +32,16 @@ const emptyDay = () => ({
   transit: "",
   hotel: "",
   other: "",
+  photos: [],
+  places: [],
 });
 
 function CreateItinerary({ editMode = false }) {
   const { addItinerary, updateItineraryInState } = useItineraries();
   const navigate = useNavigate();
   const { id } = useParams();
+  const { user } = useAuth();
+  const viewerUid = user?.uid;
 
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -49,12 +57,18 @@ function CreateItinerary({ editMode = false }) {
   const [isPublic, setIsPublic] = useState(false);
   const [tags, setTags] = useState([]);
 
+  // Reloads once sign-in resolves: a private trip isn't visible until then, and
+  // copies always start private.
   useEffect(() => {
+    let ignore = false;
+
     const loadItinerary = async () => {
       if (!editMode || !id) return;
 
       try {
         const response = await getItineraryById(id);
+        if (ignore) return;
+
         const trip = response.data;
 
         setForm({
@@ -76,6 +90,8 @@ function CreateItinerary({ editMode = false }) {
                 transit: day.transit || "",
                 hotel: day.hotel || "",
                 other: day.other || day.notes || "",
+                photos: day.photos || [],
+                places: day.places || [],
               }))
             : [emptyDay()]
         );
@@ -85,7 +101,11 @@ function CreateItinerary({ editMode = false }) {
     };
 
     loadItinerary();
-  }, [editMode, id]);
+
+    return () => {
+      ignore = true;
+    };
+  }, [editMode, id, viewerUid]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -121,6 +141,8 @@ function CreateItinerary({ editMode = false }) {
         transit: day.transit,
         hotel: day.hotel,
         notes: day.other,
+        photos: day.photos,
+        places: day.places,
       })),
     };
 
@@ -327,6 +349,29 @@ function CreateItinerary({ editMode = false }) {
                   }
                 />
               </label>
+            </div>
+
+            <div className="day-extras">
+              <div className="day-subfield">
+                <span className="subfield-label">
+                  <MapPin size={15} /> Places to pin on the map
+                </span>
+                <DayPlacesEditor
+                  places={day.places}
+                  near={form.destination}
+                  onChange={(places) => handleDayChange(index, "places", places)}
+                />
+              </div>
+
+              <div className="day-subfield">
+                <span className="subfield-label">
+                  <Camera size={15} /> Photos
+                </span>
+                <DayPhotosEditor
+                  photos={day.photos}
+                  onChange={(photos) => handleDayChange(index, "photos", photos)}
+                />
+              </div>
             </div>
           </div>
         ))}

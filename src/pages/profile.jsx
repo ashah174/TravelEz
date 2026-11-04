@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ShieldCheck, ArrowRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useItineraries } from "../context/ItineraryContext";
-import { getMyProfile, updateMyProfile } from "../services/api";
+import { getFollowing, getMyProfile, updateMyProfile } from "../services/api";
 import ImageUpload from "../components/imageupload";
 import { optimizedImageUrl } from "../utils/images";
 import ItineraryCard from "../components/itinerarycard";
@@ -50,6 +50,26 @@ function Profile() {
   const [draft, setDraft] = useState(EMPTY_PROFILE);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [following, setFollowing] = useState([]);
+  const viewerUid = user?.uid;
+
+  useEffect(() => {
+    if (!viewerUid) return;
+
+    let ignore = false;
+
+    getFollowing()
+      .then((response) => {
+        if (!ignore) setFollowing(response.data);
+      })
+      .catch((followingError) =>
+        console.error("Error loading following list:", followingError)
+      );
+
+    return () => {
+      ignore = true;
+    };
+  }, [viewerUid]);
 
   useEffect(() => {
     // Signed-out visitors see the sign-in prompt, so there's nothing to load.
@@ -218,6 +238,37 @@ function Profile() {
               >
                 <ShieldCheck size={18} /> Admin Account
               </p>
+            )}
+
+            <h2>Following</h2>
+
+            {following.length === 0 ? (
+              <p style={{ color: "#888" }}>
+                You aren't following anyone yet. Open a traveler's profile to
+                follow them.
+              </p>
+            ) : (
+              <div className="following-list">
+                {following.map((person) => {
+                  const personName = person.name || "TravelEz traveler";
+                  return (
+                    <Link key={person.uid} to={`/u/${person.uid}`} className="following-chip">
+                      {person.image ? (
+                        <img
+                          src={optimizedImageUrl(person.image, 64)}
+                          alt=""
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <span className="following-chip-initial">
+                          {personName.charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                      {personName}
+                    </Link>
+                  );
+                })}
+              </div>
             )}
 
             <h2>

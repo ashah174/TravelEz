@@ -1,16 +1,38 @@
 import { useEffect, useState } from "react";
 import ItineraryCard from "../components/itinerarycard";
 import { Link } from "react-router-dom";
-import { PlusCircle, Search, Heart, Sparkles } from "lucide-react";
+import { PlusCircle, Search, Heart, Sparkles, Tags, Users } from "lucide-react";
 import logo from "../images/travelezlogo.jpg";
-import { searchItineraries } from "../services/api";
+import { getFeed, searchItineraries } from "../services/api";
+import { useAuth } from "../context/AuthContext";
+import TagLinks from "../components/taglinks";
 
 const RECOMMENDED_COUNT = 6;
+const FEED_COUNT = 6;
 
 
 function Home() {
   const [recommended, setRecommended] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const viewerUid = user?.uid;
+  const [feed, setFeed] = useState(null);
+
+  useEffect(() => {
+    if (!viewerUid) return;
+
+    let ignore = false;
+
+    getFeed(FEED_COUNT)
+      .then((response) => {
+        if (!ignore) setFeed(response.data);
+      })
+      .catch((error) => console.error("Error loading feed:", error));
+
+    return () => {
+      ignore = true;
+    };
+  }, [viewerUid]);
 
   useEffect(() => {
     let ignore = false;
@@ -84,6 +106,27 @@ function Home() {
         </div>
       </section>
 
+      {/* Stays hidden until the visitor follows someone. */}
+      {viewerUid && feed?.followingCount > 0 && (
+        <>
+          <h2 className="section-heading">
+            <Users size={22} /> From People You Follow
+          </h2>
+
+          {feed.results.length > 0 ? (
+            <div className="card-grid">
+              {feed.results.map((trip) => (
+                <ItineraryCard key={trip._id} itinerary={trip} />
+              ))}
+            </div>
+          ) : (
+            <p className="public-hint">
+              The people you follow haven't shared any public trips yet.
+            </p>
+          )}
+        </>
+      )}
+
       <h2 className="section-heading">
         <Sparkles size={22} className="star-icon" /> Recommended Itineraries
       </h2>
@@ -102,6 +145,11 @@ function Home() {
           share it to see it here.
         </p>
       )}
+
+      <h2 className="section-heading">
+        <Tags size={22} /> Browse by Tag
+      </h2>
+      <TagLinks />
     </div>
   );
 }
