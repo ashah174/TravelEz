@@ -40,7 +40,7 @@ function ItineraryCard({ itinerary, onDelete, showAuthor = true }) {
           onClick={() => toggleFavorite(itinerary)}
           aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
         >
-          <Heart size={18} fill={favorited ? "#e11d48" : "none"} />
+          <Heart size={18} fill={favorited ? "var(--favorite)" : "none"} />
         </button>
       </div>
 
@@ -82,7 +82,7 @@ function ItineraryCard({ itinerary, onDelete, showAuthor = true }) {
 
         {averageRating && (
           <p className="icon-text">
-            <Star size={15} className="star-icon" fill="#c9a87c" /> {averageRating}
+            <Star size={15} className="star-icon" fill="var(--star)" /> {averageRating}
           </p>
         )}
 

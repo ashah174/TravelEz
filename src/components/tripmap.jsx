@@ -57,7 +57,7 @@ function TripMap({ location, title, stops = [] }) {
             {points.length > 1 && (
               <Polyline
                 positions={points}
-                pathOptions={{ color: "#3d6140", weight: 3, opacity: 0.7, dashArray: "6 8" }}
+                pathOptions={{ color: "var(--accent)", weight: 3, opacity: 0.7, dashArray: "6 8" }}
               />
             )}
             {stops.map((stop) => (
@@ -76,7 +76,7 @@ function TripMap({ location, title, stops = [] }) {
           <CircleMarker
             center={center}
             radius={11}
-            pathOptions={{ color: "#3d6140", fillColor: "#7a9e7e", fillOpacity: 0.85, weight: 3 }}
+            pathOptions={{ color: "var(--accent-hover)", fillColor: "var(--accent)", fillOpacity: 0.85, weight: 3 }}
           >
             <Tooltip direction="top" offset={[0, -10]} permanent>
               {title}

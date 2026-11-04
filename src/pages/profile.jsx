@@ -201,7 +201,7 @@ function Profile() {
               />
             </label>
 
-            {error && <p style={{ color: "#e11d48" }}>{error}</p>}
+            {error && <p style={{ color: "var(--danger-text)" }}>{error}</p>}
 
             <button
               className="edit-profile-btn"
@@ -234,7 +234,7 @@ function Profile() {
             {isAdmin && (
               <p
                 className="icon-text"
-                style={{ color: "#e11d48", fontWeight: "bold" }}
+                style={{ color: "var(--danger-text)", fontWeight: "bold" }}
               >
                 <ShieldCheck size={18} /> Admin Account
               </p>
@@ -243,7 +243,7 @@ function Profile() {
             <h2>Following</h2>
 
             {following.length === 0 ? (
-              <p style={{ color: "#888" }}>
+              <p style={{ color: "var(--text-muted)" }}>
                 You aren't following anyone yet. Open a traveler's profile to
                 follow them.
               </p>
@@ -283,7 +283,7 @@ function Profile() {
             </h2>
 
             {myItineraries.length === 0 ? (
-              <p style={{ color: "#888" }}>No uploaded itineraries yet.</p>
+              <p style={{ color: "var(--text-muted)" }}>No uploaded itineraries yet.</p>
             ) : (
               <div className="card-grid">
                 {myItineraries.map((trip) => (
@@ -304,7 +304,7 @@ function Profile() {
             </h2>
 
             {favorites.length === 0 ? (
-              <p style={{ color: "#888" }}>No saved itineraries yet.</p>
+              <p style={{ color: "var(--text-muted)" }}>No saved itineraries yet.</p>
             ) : (
               <div className="card-grid">
                 {favorites.map((trip) => (

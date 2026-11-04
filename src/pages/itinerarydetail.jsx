@@ -274,7 +274,7 @@ function ItineraryDetail() {
 
         {averageRating && (
           <p className="detail-rating icon-text">
-            <Star size={20} className="star-icon" fill="#c9a87c" /> {averageRating}
+            <Star size={20} className="star-icon" fill="var(--star)" /> {averageRating}
           </p>
         )}
 
@@ -495,7 +495,7 @@ function ItineraryDetail() {
                       {comment.username || "Anonymous"}
                     </p>
                     <p className="icon-text">
-                      <Star size={15} className="star-icon" fill="#c9a87c" />{" "}
+                      <Star size={15} className="star-icon" fill="var(--star)" />{" "}
                       {Number(comment.rating).toFixed(1)}
                     </p>
                     <p>{comment.text}</p>

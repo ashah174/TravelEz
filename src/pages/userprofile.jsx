@@ -147,7 +147,7 @@ function UserProfile() {
           </span>
           {averageRating && (
             <span className="icon-text">
-              <Star size={16} className="star-icon" fill="#c9a87c" /> {averageRating}{" "}
+              <Star size={16} className="star-icon" fill="var(--star)" /> {averageRating}{" "}
               avg from {stats.reviewCount} review{stats.reviewCount !== 1 ? "s" : ""}
             </span>
           )}
