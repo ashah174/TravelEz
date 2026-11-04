@@ -10,6 +10,8 @@ import Favorites from "./pages/favorites";
 import MyItineraries from "./pages/myitineraries";
 import PublicItineraries from "./pages/publicitineraries";
 import UserProfile from "./pages/userprofile";
+import TagPage from "./pages/tagpage";
+import TagsIndex from "./pages/tagsindex";
 import { AuthProvider } from "./context/AuthContext";
 import { ItineraryProvider } from "./context/ItineraryContext";
 import "./App.css";
@@ -33,6 +35,8 @@ function App() {
             <Route path="/my-itineraries" element={<MyItineraries />} />
             <Route path="/public" element={<PublicItineraries />} />
             <Route path="/u/:uid" element={<UserProfile />} />
+            <Route path="/tags" element={<TagsIndex />} />
+            <Route path="/tags/:slug" element={<TagPage />} />
             <Route path="/edit-itinerary/:id" element={<CreateItinerary editMode={true} />} />
           </Routes>
         </Router>

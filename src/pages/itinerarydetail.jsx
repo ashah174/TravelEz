@@ -12,6 +12,9 @@ import { useAuth } from "../context/AuthContext";
 import { useItineraries } from "../context/ItineraryContext";
 import { getAverageRating, formatRating } from "../utils/rating";
 import { optimizedImageUrl } from "../utils/images";
+import { dayColor, getTripStops } from "../utils/stops";
+import { tagPath } from "../constants/tags";
+import PhotoGallery from "../components/photogallery";
 
 const TripMap = lazy(() => import("../components/tripmap"));
 
@@ -37,21 +40,31 @@ function ItineraryDetail() {
   const [editRating, setEditRating] = useState("");
   const [editComment, setEditComment] = useState("");
 
+  // Reloads once sign-in resolves: what the viewer may see depends on who they
+  // are (their private trips, the "Inspired by" credit).
+  const viewerUid = user?.uid;
+
   useEffect(() => {
+    let ignore = false;
+
     const loadItinerary = async () => {
       try {
         const response = await getItineraryById(id);
-        setItinerary(response.data);
+        if (!ignore) setItinerary(response.data);
       } catch (error) {
         console.error("Error loading itinerary:", error);
-        setItinerary(null);
+        if (!ignore) setItinerary(null);
       } finally {
-        setLoading(false);
+        if (!ignore) setLoading(false);
       }
     };
 
     loadItinerary();
-  }, [id]);
+
+    return () => {
+      ignore = true;
+    };
+  }, [id, viewerUid]);
 
   const handleAddComment = async (e) => {
     e.preventDefault();
@@ -164,6 +177,9 @@ function ItineraryDetail() {
   const author = itinerary.author;
   const hasLocation =
     Number.isFinite(itinerary.location?.lat) && Number.isFinite(itinerary.location?.lng);
+  const stops = getTripStops(itinerary.days);
+  const inspiredBy = itinerary.inspiredBy;
+  const copyCount = itinerary.copyCount || 0;
 
   const handleCopy = async () => {
     if (!user) {
@@ -212,12 +228,28 @@ function ItineraryDetail() {
           </p>
         )}
 
+        {inspiredBy && (
+          <p className="card-author">
+            Inspired by{" "}
+            <Link to={`/itinerary/${inspiredBy._id}`}>{inspiredBy.title}</Link>
+            {inspiredBy.author?.uid && (
+              <>
+                {" "}
+                by{" "}
+                <Link to={`/u/${inspiredBy.author.uid}`}>
+                  {inspiredBy.author.name || "TravelEz traveler"}
+                </Link>
+              </>
+            )}
+          </p>
+        )}
+
         {itinerary.tags?.length > 0 && (
           <div className="tag-list">
             {itinerary.tags.map((tag) => (
               <Link
                 key={tag}
-                to={`/results?tags=${encodeURIComponent(tag)}`}
+                to={tagPath(tag)}
                 className="tag-chip tag-chip--static"
               >
                 {tag}
@@ -246,6 +278,12 @@ function ItineraryDetail() {
           </p>
         )}
 
+        {copyCount > 0 && (
+          <p className="copy-count icon-text">
+            <Copy size={16} /> Copied {copyCount} time{copyCount !== 1 ? "s" : ""}
+          </p>
+        )}
+
         {itinerary.image && (
           <img
             src={optimizedImageUrl(itinerary.image, 1200)}
@@ -267,11 +305,11 @@ function ItineraryDetail() {
           </>
         )}
 
-        {hasLocation && (
+        {(hasLocation || stops.length > 0) && (
           <>
             <h2>Where</h2>
             <Suspense fallback={<div className="trip-map trip-map--loading">Loading map...</div>}>
-              <TripMap location={itinerary.location} title={itinerary.destination} />
+              <TripMap location={itinerary.location} title={itinerary.destination} stops={stops} />
             </Suspense>
           </>
         )}
@@ -283,6 +321,24 @@ function ItineraryDetail() {
             {itinerary.days.map((day, index) => (
               <div className="day-box" key={index}>
                 <h3>Day {index + 1}</h3>
+
+                {stops.some((stop) => stop.dayIndex === index) && (
+                  <ol className="day-stops">
+                    {stops
+                      .filter((stop) => stop.dayIndex === index)
+                      .map((stop) => (
+                        <li key={stop.number}>
+                          <span
+                            className="day-stop-number"
+                            style={{ background: dayColor(index) }}
+                          >
+                            {stop.number}
+                          </span>
+                          {stop.name}
+                        </li>
+                      ))}
+                  </ol>
+                )}
 
                 {day.activities && (
                   <p>
@@ -309,6 +365,8 @@ function ItineraryDetail() {
                     <strong>Notes:</strong> {day.notes || day.other}
                   </p>
                 )}
+
+                <PhotoGallery photos={day.photos} label={`Day ${index + 1}`} />
               </div>
             ))}
           </>

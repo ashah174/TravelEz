@@ -7,6 +7,26 @@ const daySchema = new mongoose.Schema({
   transit: String,
   hotel: String,
   notes: String,
+
+  // Photo URLs for this day (Cloudinary uploads or pasted links).
+  photos: {
+    type: [String],
+    default: [],
+  },
+
+  // Places visited this day, in order. Coordinates come from geocoding when
+  // the place is added in the editor.
+  places: {
+    type: [
+      {
+        _id: false,
+        name: String,
+        lat: Number,
+        lng: Number,
+      },
+    ],
+    default: [],
+  },
 });
 
 const itinerarySchema = new mongoose.Schema(
@@ -68,6 +88,12 @@ const itinerarySchema = new mongoose.Schema(
     copiedFrom: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Itinerary",
+    },
+
+    // How many times other users have copied this itinerary.
+    copyCount: {
+      type: Number,
+      default: 0,
     },
 
     comments: [

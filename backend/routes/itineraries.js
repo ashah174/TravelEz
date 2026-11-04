@@ -3,9 +3,11 @@ const router = express.Router();
 const Itinerary = require("../models/Itinerary");
 const { requireAuth, optionalAuth, requireAdmin } = require("../middleware/auth");
 const { isAdminUser } = require("../config/admins");
-const { sanitizeTags } = require("../config/tags");
+const { TRIP_TAGS, sanitizeTags } = require("../config/tags");
 const { geocodeDestination } = require("../utils/geocode");
 const { presentItineraries, presentItinerary } = require("../utils/present");
+const { sanitizeDays } = require("../utils/days");
+const Follow = require("../models/Follow");
 
 const UPDATABLE_FIELDS = [
   "title",
@@ -24,6 +26,7 @@ const SORTS = {
   rating: { avgRating: -1, reviewCount: -1, createdAt: -1 },
   cost: { cost: 1, createdAt: -1 },
   popular: { favoriteCount: -1, createdAt: -1 },
+  copied: { copyCount: -1, createdAt: -1 },
 };
 
 const DEFAULT_PAGE_SIZE = 12;
@@ -47,7 +50,9 @@ function parseNumber(value) {
 function applyUpdatableFields(itinerary, body) {
   UPDATABLE_FIELDS.forEach((field) => {
     if (body[field] !== undefined) {
-      itinerary[field] = field === "tags" ? sanitizeTags(body[field]) : body[field];
+      if (field === "tags") itinerary.tags = sanitizeTags(body.tags);
+      else if (field === "days") itinerary.days = sanitizeDays(body.days);
+      else itinerary[field] = body[field];
     }
   });
 }
@@ -112,7 +117,7 @@ router.get("/public", async (req, res) => {
 //              (`destination` is accepted as an alias)
 //   tags       comma-separated; trips must have all of them
 //   minCost, maxCost, minDays, maxDays
-//   sort       recent | rating | cost | popular   (default: recent)
+//   sort       recent | rating | cost | popular | copied   (default: recent)
 //   page, limit
 //
 // Responds with { results, total, page, pages }.
@@ -216,6 +221,50 @@ router.get("/favorites", requireAuth, async (req, res) => {
   }
 });
 
+// GET public itineraries from people the current user follows
+router.get("/feed", requireAuth, async (req, res) => {
+  try {
+    const followees = await Follow.find({ follower: req.user.uid }).distinct("followee");
+
+    if (followees.length === 0) {
+      return res.json({ followingCount: 0, results: [] });
+    }
+
+    const limit = Math.min(Math.max(Math.floor(parseNumber(req.query.limit) || 6), 1), 24);
+    const itineraries = await Itinerary.find({
+      ownerUid: { $in: followees },
+      isPublic: true,
+    })
+      .sort({ createdAt: -1 })
+      .limit(limit);
+
+    res.json({
+      followingCount: followees.length,
+      results: await presentItineraries(itineraries),
+    });
+  } catch (error) {
+    console.error("Error getting feed:", error);
+    res.status(500).json({ message: "Error getting feed" });
+  }
+});
+
+// GET how many public itineraries use each tag
+router.get("/tags", async (req, res) => {
+  try {
+    const counts = await Itinerary.aggregate([
+      { $match: { isPublic: true } },
+      { $unwind: "$tags" },
+      { $group: { _id: "$tags", count: { $sum: 1 } } },
+    ]);
+
+    const byTag = new Map(counts.map((item) => [item._id, item.count]));
+    res.json(TRIP_TAGS.map((tag) => ({ tag, count: byTag.get(tag) || 0 })));
+  } catch (error) {
+    console.error("Error counting tags:", error);
+    res.status(500).json({ message: "Error counting tags" });
+  }
+});
+
 // GET one itinerary
 router.get("/:id", optionalAuth, async (req, res) => {
   try {
@@ -225,7 +274,22 @@ router.get("/:id", optionalAuth, async (req, res) => {
       return res.status(404).json({ message: "Itinerary not found" });
     }
 
-    await sendItinerary(res, itinerary);
+    const presented = await presentItinerary(itinerary);
+
+    // Credit the original when this is a copy, if the viewer can see it.
+    if (itinerary.copiedFrom) {
+      const source = await Itinerary.findById(itinerary.copiedFrom);
+      if (source && canViewItinerary(source, req.user)) {
+        const presentedSource = await presentItinerary(source);
+        presented.inspiredBy = {
+          _id: presentedSource._id,
+          title: presentedSource.title,
+          author: presentedSource.author,
+        };
+      }
+    }
+
+    res.json(presented);
   } catch (error) {
     console.error("Error getting itinerary:", error);
     res.status(500).json({ message: "Error getting itinerary" });
@@ -270,10 +334,7 @@ router.post("/:id/copy", requireAuth, async (req, res) => {
       description: source.description,
       tags: source.tags,
       location: source.location?.lat != null ? source.location : undefined,
-      days: source.days.map((day) => {
-        const { _id, ...rest } = day.toObject();
-        return rest;
-      }),
+      days: sanitizeDays(source.days.map((day) => day.toObject())),
       isPublic: false,
       ownerUid: req.user.uid,
       ownerEmail: req.user.email || undefined,
@@ -283,6 +344,11 @@ router.post("/:id/copy", requireAuth, async (req, res) => {
     });
 
     const savedCopy = await copy.save();
+
+    if (source.ownerUid !== req.user.uid) {
+      await Itinerary.updateOne({ _id: source._id }, { $inc: { copyCount: 1 } });
+    }
+
     await sendItinerary(res, savedCopy, 201);
   } catch (error) {
     console.error("Error copying itinerary:", error);
