@@ -7,6 +7,8 @@ function Navbar() {
   const { user, signInWithGoogle, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const name = user?.displayName || "Profile";
+
   return (
     <nav className={`navbar ${menuOpen ? "navbar--open" : ""}`}>
       <Link to="/" className="logo" onClick={() => setMenuOpen(false)}>
@@ -26,21 +28,41 @@ function Navbar() {
 
       {/* Clicking any link or button inside closes the mobile menu. */}
       <div id="nav-links" className="nav-links" onClick={() => setMenuOpen(false)}>
-        <Link to="/">Home</Link>
-        <Link to="/search">Search</Link>
-        <Link to="/public">Public Itineraries</Link>
-        <Link to="/favorites">Favorites</Link>
-        <Link to="/my-itineraries">My Itineraries</Link>
-        <Link to="/profile">Profile</Link>
-
         {user ? (
-          <button className="btn-signout" onClick={logout}>
-            Sign Out
-          </button>
+          <>
+            <Link to="/results">Explore</Link>
+            <Link to="/my-itineraries">My Trips</Link>
+            <Link to="/favorites">Favorites</Link>
+            <Link to="/create" className="nav-cta">
+              Create
+            </Link>
+            <Link to="/profile" className="nav-profile" aria-label="Profile">
+              {user.photoURL ? (
+                <img
+                  className="nav-avatar"
+                  src={user.photoURL}
+                  alt=""
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <span className="nav-avatar nav-avatar--initial">
+                  {name.charAt(0).toUpperCase()}
+                </span>
+              )}
+              <span className="nav-profile-label">Profile</span>
+            </Link>
+            <button className="btn-signout" onClick={logout}>
+              Sign out
+            </button>
+          </>
         ) : (
-          <button className="btn-signin" onClick={signInWithGoogle}>
-            Login!
-          </button>
+          <>
+            <Link to="/">Home</Link>
+            <Link to="/results">Explore</Link>
+            <button className="btn-signin" onClick={signInWithGoogle}>
+              Sign up free
+            </button>
+          </>
         )}
       </div>
     </nav>
