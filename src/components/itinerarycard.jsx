@@ -1,41 +1,55 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Copy, Heart, Star, Trash2 } from "lucide-react";
+import { Copy, Heart, MapPin, Star, Trash2 } from "lucide-react";
 import { useItineraries } from "../context/ItineraryContext";
 import { useAuth } from "../context/AuthContext";
 import { getAverageRating, formatRating } from "../utils/rating";
 import { DEFAULT_TRIP_IMAGE, optimizedImageUrl } from "../utils/images";
-import { tagPath } from "../constants/tags";
-
-const MAX_CARD_TAGS = 3;
 
 function ItineraryCard({ itinerary, onDelete, showAuthor = true }) {
   const { toggleFavorite, isFavorited, deleteItinerary } = useItineraries();
   const { isAdmin } = useAuth();
+  const [imageFailed, setImageFailed] = useState(false);
 
   const tripId = itinerary._id || itinerary.id;
   const favorited = isFavorited(tripId);
 
-  const image = optimizedImageUrl(
-    itinerary.image || itinerary.imageUrl || DEFAULT_TRIP_IMAGE,
-    640
-  );
+  const source = itinerary.image || itinerary.imageUrl;
+  const hasImage = !!source && source !== DEFAULT_TRIP_IMAGE && !imageFailed;
 
   const destination =
     itinerary.destination || itinerary.location?.label || "Unknown destination";
 
   const duration = itinerary.duration || itinerary.days?.length || 0;
-
   const averageRating = formatRating(getAverageRating(itinerary));
   const author = itinerary.author;
-  const tags = itinerary.tags || [];
   const copyCount = itinerary.copyCount || 0;
 
   return (
-    <div className="itinerary-card">
-      <div className="card-image-wrap">
-        <img src={image} alt={destination} loading="lazy" />
+    <article className="trip-card">
+      <div className="trip-card-media">
+        {hasImage ? (
+          <img
+            src={optimizedImageUrl(source, 800)}
+            alt=""
+            loading="lazy"
+            onError={() => setImageFailed(true)}
+          />
+        ) : (
+          <div className="trip-card-fallback">
+            <MapPin size={28} />
+            <span>{destination}</span>
+          </div>
+        )}
+
+        {averageRating && (
+          <span className="trip-card-rating">
+            <Star size={12} fill="currentColor" /> {averageRating}
+          </span>
+        )}
 
         <button
+          type="button"
           className={`heart-btn ${favorited ? "heart-btn--active" : ""}`}
           onClick={() => toggleFavorite(itinerary)}
           aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
@@ -44,74 +58,61 @@ function ItineraryCard({ itinerary, onDelete, showAuthor = true }) {
         </button>
       </div>
 
-      <div className="card-content">
-        <h3>{itinerary.title}</h3>
-        <p>{destination}</p>
+      <div className="trip-card-details">
+        <p className="trip-card-destination">{destination}</p>
+        <h3>
+          <Link to={`/itinerary/${tripId}`} className="trip-card-link">
+            {itinerary.title}
+          </Link>
+        </h3>
 
-        {showAuthor && author?.uid && (
-          <p className="card-author">
-            by{" "}
-            <Link to={`/u/${author.uid}`}>{author.name || "TravelEz traveler"}</Link>
-          </p>
-        )}
-
-        {tags.length > 0 && (
-          <div className="tag-list">
-            {tags.slice(0, MAX_CARD_TAGS).map((tag) => (
-              <Link key={tag} to={tagPath(tag)} className="tag-chip tag-chip--static">
-                {tag}
-              </Link>
-            ))}
-            {tags.length > MAX_CARD_TAGS && (
-              <span className="tag-chip tag-chip--static">
-                +{tags.length - MAX_CARD_TAGS}
-              </span>
-            )}
-          </div>
-        )}
-
-        {duration > 0 && (
-          <p>
-            {duration} day{duration !== 1 ? "s" : ""}
-          </p>
-        )}
-
-        {itinerary.cost > 0 && (
-          <p>Estimated Cost: ${Number(itinerary.cost).toLocaleString()}</p>
-        )}
-
-        {averageRating && (
-          <p className="icon-text">
-            <Star size={15} className="star-icon" fill="var(--star)" /> {averageRating}
-          </p>
-        )}
-
-        {copyCount > 0 && (
-          <p className="icon-text">
-            <Copy size={15} /> Copied {copyCount} time{copyCount !== 1 ? "s" : ""}
-          </p>
-        )}
-
-        <Link to={`/itinerary/${tripId}`}>
-          <button>View Details</button>
-        </Link>
-
-        {isAdmin && (
-          <button
-            className="btn-admin-delete"
-            onClick={() => {
-              if (onDelete) {
-                onDelete(tripId);
-              } else {
-                deleteItinerary(tripId);
-              }
-            }}
-          >
-            <Trash2 size={15} /> Admin Delete
-          </button>
-        )}
+        <div className="trip-card-badges">
+          {duration > 0 && (
+            <span>
+              {duration} day{duration !== 1 ? "s" : ""}
+            </span>
+          )}
+          {itinerary.cost > 0 && <span>${Number(itinerary.cost).toLocaleString()}</span>}
+          {copyCount > 0 && (
+            <span className="icon-text">
+              <Copy size={12} /> Copied {copyCount} time{copyCount !== 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Makes the whole card clickable for pointers. Keyboards and screen
+          readers use the title link instead. */}
+      <Link
+        to={`/itinerary/${tripId}`}
+        className="trip-card-hit"
+        tabIndex={-1}
+        aria-hidden="true"
+      />
+
+      {showAuthor && author?.uid && (
+        <p className="card-author trip-card-author">
+          by{" "}
+          <Link to={`/u/${author.uid}`}>{author.name || "TravelEz traveler"}</Link>
+        </p>
+      )}
+
+      {isAdmin && (
+        <button
+          type="button"
+          className="btn-admin-delete trip-card-admin"
+          onClick={() => {
+            if (onDelete) {
+              onDelete(tripId);
+            } else {
+              deleteItinerary(tripId);
+            }
+          }}
+        >
+          <Trash2 size={15} /> Admin Delete
+        </button>
+      )}
+    </article>
   );
 }
 
