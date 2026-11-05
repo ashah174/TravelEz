@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/navbar";
+import Footer from "./components/footer";
 import Home from "./pages/home";
 import ItineraryDetail from "./pages/itinerarydetail";
 import Profile from "./pages/profile";
@@ -24,21 +25,25 @@ function App() {
         <Router>
           <Navbar />
 
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/itinerary/:id" element={<ItineraryDetail />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/results" element={<SearchResults />} />
-            <Route path="/create" element={<CreateItinerary />} />
-            <Route path="/search" element={<FindItinerary />} />
-            <Route path="/favorites" element={<Favorites />} />
-            <Route path="/my-itineraries" element={<MyItineraries />} />
-            <Route path="/public" element={<PublicItineraries />} />
-            <Route path="/u/:uid" element={<UserProfile />} />
-            <Route path="/tags" element={<TagsIndex />} />
-            <Route path="/tags/:slug" element={<TagPage />} />
-            <Route path="/edit-itinerary/:id" element={<CreateItinerary editMode={true} />} />
-          </Routes>
+          <main className="app-main">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/itinerary/:id" element={<ItineraryDetail />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/results" element={<SearchResults />} />
+              <Route path="/create" element={<CreateItinerary />} />
+              <Route path="/search" element={<FindItinerary />} />
+              <Route path="/favorites" element={<Favorites />} />
+              <Route path="/my-itineraries" element={<MyItineraries />} />
+              <Route path="/public" element={<PublicItineraries />} />
+              <Route path="/u/:uid" element={<UserProfile />} />
+              <Route path="/tags" element={<TagsIndex />} />
+              <Route path="/tags/:slug" element={<TagPage />} />
+              <Route path="/edit-itinerary/:id" element={<CreateItinerary editMode={true} />} />
+            </Routes>
+          </main>
+
+          <Footer />
         </Router>
       </ItineraryProvider>
     </AuthProvider>

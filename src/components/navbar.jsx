@@ -1,16 +1,36 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+
+const SOLID_AFTER_SCROLL = 24;
 
 function Navbar() {
   const { user, signInWithGoogle, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const { pathname } = useLocation();
+  const [atTop, setAtTop] = useState(() => window.scrollY < SOLID_AFTER_SCROLL);
+
+  useEffect(() => {
+    const handleScroll = () => setAtTop(window.scrollY < SOLID_AFTER_SCROLL);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Home's hero photo runs under the navbar, which stays see-through until the
+  // page scrolls or the phone menu opens.
+  const isHome = pathname === "/";
+  const overPhoto = isHome && atTop && !menuOpen;
+
   const name = user?.displayName || "Profile";
 
   return (
-    <nav className={`navbar ${menuOpen ? "navbar--open" : ""}`}>
+    <nav
+      className={`navbar ${menuOpen ? "navbar--open" : ""} ${isHome ? "navbar--home" : ""} ${
+        overPhoto ? "navbar--over-photo" : ""
+      }`}
+    >
       <Link to="/" className="logo" onClick={() => setMenuOpen(false)}>
         TravelEz
       </Link>

@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import ItineraryCard from "../components/itinerarycard";
 import { Link } from "react-router-dom";
-import { PlusCircle, Search, Heart, Sparkles, Tags, Users } from "lucide-react";
-import logo from "../images/travelezlogo.jpg";
-import { getFeed, searchItineraries } from "../services/api";
+import { getFeed, getItineraryById, searchItineraries } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import TagLinks from "../components/taglinks";
+import HeroCarousel from "../components/herocarousel";
+import { FEATURED_TRIP_ID, HERO_TRIP_COUNT } from "../constants/featured";
+import { getTripPhotos } from "../utils/pickPhoto";
 
 const RECOMMENDED_COUNT = 6;
 const FEED_COUNT = 6;
-
 
 function Home() {
   const [recommended, setRecommended] = useState([]);
@@ -17,7 +17,27 @@ function Home() {
   const { user } = useAuth();
   const viewerUid = user?.uid;
   const [feed, setFeed] = useState(null);
+  // undefined while loading; null when no trip is set or it can't be shown.
+  const [featured, setFeatured] = useState(FEATURED_TRIP_ID ? undefined : null);
 
+  useEffect(() => {
+    if (!FEATURED_TRIP_ID) return;
+
+    let ignore = false;
+
+    getItineraryById(FEATURED_TRIP_ID)
+      .then((response) => {
+        const trip = response.data;
+        if (!ignore) setFeatured(trip.isPublic && getTripPhotos(trip).length > 0 ? trip : null);
+      })
+      .catch(() => {
+        if (!ignore) setFeatured(null);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
   useEffect(() => {
     if (!viewerUid) return;
 
@@ -58,99 +78,98 @@ function Home() {
     };
   }, []);
 
+  // The featured trip, or else the highest-rated trips with their own photos
+  // (results are already sorted by rating). Until they load, the hero shows its
+  // solid background.
+  const topTrips = recommended
+    .filter((trip) => getTripPhotos(trip).length > 0)
+    .slice(0, HERO_TRIP_COUNT);
+  const heroTrips = featured === undefined ? [] : featured ? [featured] : topTrips;
+
   return (
-    <div className="page">
-      <section className="hero exciting-hero">
+    <>
+      <HeroCarousel trips={heroTrips}>
+        <div className="home-hero-inner">
+          <p className="home-hero-eyebrow">Plan · Share · Wander</p>
+          <h1>
+            Steal a <em>real</em> trip.
+            <br />
+            Make it yours.
+          </h1>
+          <p className="home-hero-sub">
+            Copy an itinerary from someone who's actually been there, then
+            change anything you like.
+          </p>
 
-        <img
-          src={logo}
-          alt="TravelEz logo"
-          className="hero-logo"
-        />
-
-        <h1>
-          Find and Share <span>Itineraries</span>
-        </h1>
-
-        <p>
-          Discover amazing travel plans, create your own adventures,
-          and share them with other travelers.
-        </p>
-
-        <div className="hero-actions">
-
-          <Link to="/create" className="hero-btn primary">
-            <PlusCircle size={28} />
-            <div>
-              <strong>Create Your Own Itinerary</strong>
-              <small>Plan Your Next Adventure</small>
-            </div>
-          </Link>
-
-          <Link to="/search" className="hero-btn secondary">
-            <Search size={28} />
-            <div>
-              <strong>Find an Itinerary</strong>
-              <small>Explore Travel Plans</small>
-            </div>
-          </Link>
-
-          <Link to="/favorites" className="hero-btn favorite">
-            <Heart size={28} />
-            <div>
-              <strong>View Favorite Itineraries</strong>
-              <small>View Your Saved Trips</small>
-            </div>
-          </Link>
-
+          <div className="home-hero-actions">
+            <Link to="/results" className="home-hero-btn home-hero-btn--primary">
+              Explore trips
+            </Link>
+            <Link to="/create" className="home-hero-btn home-hero-btn--secondary">
+              Plan your own
+            </Link>
+          </div>
         </div>
-      </section>
 
-      {/* Stays hidden until the visitor follows someone. */}
-      {viewerUid && feed?.followingCount > 0 && (
-        <>
-          <h2 className="section-heading">
-            <Users size={22} /> From People You Follow
-          </h2>
+      </HeroCarousel>
 
-          {feed.results.length > 0 ? (
+      <div className="page home-content">
+        {/* Stays hidden until the visitor follows someone. */}
+        {viewerUid && feed?.followingCount > 0 && (
+          <section className="home-section">
+            <div className="home-section-head">
+              <h2>From People You Follow</h2>
+            </div>
+
+            {feed.results.length > 0 ? (
+              <div className="card-grid">
+                {feed.results.map((trip) => (
+                  <ItineraryCard key={trip._id} itinerary={trip} />
+                ))}
+              </div>
+            ) : (
+              <p className="public-hint">
+                The people you follow haven't shared any public trips yet.
+              </p>
+            )}
+          </section>
+        )}
+
+        <section className="home-section">
+          <div className="home-section-head">
+            <h2>Recommended</h2>
+            <Link to="/results?sort=rating" className="home-section-link">
+              See all →
+            </Link>
+          </div>
+
+          {loading ? (
+            <p>Loading itineraries...</p>
+          ) : recommended.length > 0 ? (
             <div className="card-grid">
-              {feed.results.map((trip) => (
+              {recommended.map((trip) => (
                 <ItineraryCard key={trip._id} itinerary={trip} />
               ))}
             </div>
           ) : (
             <p className="public-hint">
-              The people you follow haven't shared any public trips yet.
+              No public itineraries yet. <Link to="/create">Create one</Link> and
+              share it to see it here.
             </p>
           )}
-        </>
-      )}
+        </section>
+      </div>
 
-      <h2 className="section-heading">
-        <Sparkles size={22} className="star-icon" /> Recommended Itineraries
-      </h2>
-
-      {loading ? (
-        <p>Loading itineraries...</p>
-      ) : recommended.length > 0 ? (
-        <div className="card-grid">
-          {recommended.map((trip) => (
-            <ItineraryCard key={trip._id} itinerary={trip} />
-          ))}
+      <section className="home-band">
+        <div className="home-section-head">
+          <h2>Browse by Tag</h2>
+          <Link to="/tags" className="home-section-link">
+            All tags →
+          </Link>
         </div>
-      ) : (
-        <p className="public-hint">
-          No public itineraries yet. <Link to="/create">Create one</Link> and
-          share it to see it here.
-        </p>
-      )}
-
-      <h2 className="section-heading">
-        <Tags size={22} /> Browse by Tag
-      </h2>
-      <TagLinks />
-    </div>
+        <TagLinks />
+      </section>
+    </>
   );
 }
 
