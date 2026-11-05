@@ -15,7 +15,6 @@ API.interceptors.request.use(async (config) => {
 });
 
 export const getItineraries = () => API.get("/itineraries");
-export const getPublicItineraries = () => API.get("/itineraries/public");
 export const getMyItineraries = () => API.get("/itineraries/mine");
 export const getFavoriteItineraries = () => API.get("/itineraries/favorites");
 // params: { q, tags, minCost, maxCost, minDays, maxDays, sort, page, limit }

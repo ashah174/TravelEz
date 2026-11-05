@@ -40,10 +40,11 @@ function CreateItinerary({ editMode = false }) {
   const { addItinerary, updateItineraryInState } = useItineraries();
   const navigate = useNavigate();
   const { id } = useParams();
-  const { user } = useAuth();
+  const { user, authReady, signInWithGoogle } = useAuth();
   const viewerUid = user?.uid;
 
   const [successMessage, setSuccessMessage] = useState("");
+  const [saveError, setSaveError] = useState("");
 
   const [form, setForm] = useState({
     title: "",
@@ -124,6 +125,16 @@ function CreateItinerary({ editMode = false }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSaveError("");
+
+    // Keeps what's been typed: sign in first, then carry on saving.
+    if (!user) {
+      try {
+        await signInWithGoogle();
+      } catch {
+        return;
+      }
+    }
 
     const newItinerary = {
       title: form.title,
@@ -160,8 +171,8 @@ function CreateItinerary({ editMode = false }) {
 
       setSuccessMessage(
         editMode
-          ? "Itinerary updated successfully!"
-          : "Itinerary created successfully!"
+          ? "Trip updated successfully!"
+          : "Trip created successfully!"
       );
 
       setTimeout(() => {
@@ -169,6 +180,7 @@ function CreateItinerary({ editMode = false }) {
       }, 1200);
     } catch (error) {
       console.error("Error saving itinerary:", error);
+      setSaveError("Couldn't save your trip. Your changes are still here, so please try again.");
     }
   };
 
@@ -176,7 +188,7 @@ function CreateItinerary({ editMode = false }) {
     <div className="page create-page">
       <section className="create-hero">
         <PlusCircle size={48} />
-        <h1>{editMode ? "Edit Your Itinerary" : "Create Your Own Itinerary"}</h1>
+        <h1>{editMode ? "Edit Your Trip" : "Create Your Own Trip"}</h1>
         <p>
           {editMode
             ? "Update your travel plan and save your changes."
@@ -187,6 +199,13 @@ function CreateItinerary({ editMode = false }) {
       {successMessage && <div className="success-toast">{successMessage}</div>}
 
       <form className="itinerary-form" onSubmit={handleSubmit}>
+        {authReady && !user && (
+          <p className="form-notice">
+            You can plan now and sign in when you save. Pinning places on the
+            map needs you to sign in first.
+          </p>
+        )}
+
         <div className="form-section-label">Trip Details</div>
 
         <label>
@@ -252,7 +271,7 @@ function CreateItinerary({ editMode = false }) {
           <TagPicker selected={tags} onChange={setTags} />
         </div>
 
-        <div className="form-section-label" style={{ marginTop: "12px" }}>
+        <div className="form-section-label form-section-label--days">
           Day-by-Day Schedule
           <span className="form-section-sub">
             {" "}
@@ -380,8 +399,14 @@ function CreateItinerary({ editMode = false }) {
           <Plus size={18} /> Add Day {days.length + 1}
         </button>
 
+        {saveError && <p className="form-error">{saveError}</p>}
+
         <button type="submit" className="submit-itinerary-btn">
-          {editMode ? "Update Itinerary" : "Save Itinerary"}
+          {authReady && !user
+            ? "Sign in and save"
+            : editMode
+              ? "Update Trip"
+              : "Save Trip"}
         </button>
       </form>
     </div>

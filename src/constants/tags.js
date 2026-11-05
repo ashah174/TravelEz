@@ -17,7 +17,7 @@ export const TRIP_TAGS = [
 // Headline and blurb for each tag's page at /tags/<slug>.
 export const TAG_DETAILS = {
   Food: { heading: "Best Food Trips", blurb: "Markets, street food, and restaurants worth planning a whole day around." },
-  Budget: { heading: "Best Budget Trips", blurb: "Itineraries that stretch every dollar without skipping the good parts." },
+  Budget: { heading: "Best Budget Trips", blurb: "Trips that stretch every dollar without skipping the good parts." },
   Luxury: { heading: "Best Luxury Trips", blurb: "Splurge-worthy stays, fine dining, and once-in-a-lifetime experiences." },
   Adventure: { heading: "Best Adventure Trips", blurb: "Hikes, dives, and days that end with a good story." },
   Culture: { heading: "Best Culture Trips", blurb: "Museums, history, architecture, and local traditions." },
