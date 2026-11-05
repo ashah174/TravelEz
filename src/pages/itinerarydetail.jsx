@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { Copy, Star, Trash2 } from "lucide-react";
+import { Copy, Map as MapIcon, Star, Trash2 } from "lucide-react";
 import {
   copyItinerary,
   getItineraryById,
@@ -11,12 +11,15 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { useItineraries } from "../context/ItineraryContext";
 import { getAverageRating, formatRating } from "../utils/rating";
-import { optimizedImageUrl } from "../utils/images";
+import { DEFAULT_TRIP_IMAGE, optimizedImageUrl } from "../utils/images";
 import { dayColor, getTripStops } from "../utils/stops";
 import { tagPath } from "../constants/tags";
 import PhotoGallery from "../components/photogallery";
 
 const TripMap = lazy(() => import("../components/tripmap"));
+
+// Below this width the map is hidden behind a button and Copy sits in a bottom bar.
+const STACKED_LAYOUT = "(max-width: 900px)";
 
 
 function ItineraryDetail() {
@@ -39,6 +42,17 @@ function ItineraryDetail() {
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editRating, setEditRating] = useState("");
   const [editComment, setEditComment] = useState("");
+
+  const [heroFailed, setHeroFailed] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
+  const [isStacked, setIsStacked] = useState(() => window.matchMedia(STACKED_LAYOUT).matches);
+
+  useEffect(() => {
+    const query = window.matchMedia(STACKED_LAYOUT);
+    const handleChange = (e) => setIsStacked(e.matches);
+    query.addEventListener("change", handleChange);
+    return () => query.removeEventListener("change", handleChange);
+  }, []);
 
   // Reloads once sign-in resolves: what the viewer may see depends on who they
   // are (their private trips, the "Inspired by" credit).
@@ -145,22 +159,14 @@ function ItineraryDetail() {
     }
   };
 
-  if (loading) {
+  if (loading || !itinerary) {
     return (
-      <div className="page">
-        <div className="detail-card">
-          <h1>Loading...</h1>
-        </div>
-      </div>
-    );
-  }
-
-  if (!itinerary) {
-    return (
-      <div className="page">
-        <div className="detail-card">
-          <h1>Itinerary not found</h1>
-        </div>
+      <div className="trip-page">
+        <header className="trip-hero">
+          <div className="trip-hero-inner">
+            <h1>{loading ? "Loading..." : "Itinerary not found"}</h1>
+          </div>
+        </header>
       </div>
     );
   }
@@ -170,6 +176,8 @@ function ItineraryDetail() {
   const averageRating = formatRating(getAverageRating(itinerary));
 
   const duration = itinerary.duration || itinerary.days?.length || 0;
+  const hasCover =
+    !!itinerary.image && itinerary.image !== DEFAULT_TRIP_IMAGE && !heroFailed;
 
   const isOwner = !!user && user.uid === itinerary.ownerUid;
   const hasReviewed =
@@ -209,325 +217,326 @@ function ItineraryDetail() {
     navigate("/");
   };
 
-  return (
-    <div className="page">
-      <div className="detail-card">
-        {isAdmin && (
-          <button className="btn-admin-delete" onClick={handleAdminDelete}>
-            <Trash2 size={15} /> Admin Delete This Itinerary
-          </button>
-        )}
-
-        <h1>{itinerary.title}</h1>
-        <p className="subtitle">{itinerary.destination}</p>
-
-        {author?.uid && (
-          <p className="card-author">
-            by{" "}
-            <Link to={`/u/${author.uid}`}>{author.name || "TravelEz traveler"}</Link>
-          </p>
-        )}
-
-        {inspiredBy && (
-          <p className="card-author">
-            Inspired by{" "}
-            <Link to={`/itinerary/${inspiredBy._id}`}>{inspiredBy.title}</Link>
-            {inspiredBy.author?.uid && (
-              <>
-                {" "}
-                by{" "}
-                <Link to={`/u/${inspiredBy.author.uid}`}>
-                  {inspiredBy.author.name || "TravelEz traveler"}
-                </Link>
-              </>
-            )}
-          </p>
-        )}
-
-        {itinerary.tags?.length > 0 && (
-          <div className="tag-list">
-            {itinerary.tags.map((tag) => (
-              <Link
-                key={tag}
-                to={tagPath(tag)}
-                className="tag-chip tag-chip--static"
-              >
-                {tag}
+  const credits = (
+    <div className="trip-credits">
+      {author?.uid && (
+        <p>
+          by <Link to={`/u/${author.uid}`}>{author.name || "TravelEz traveler"}</Link>
+        </p>
+      )}
+      {inspiredBy && (
+        <p>
+          Inspired by <Link to={`/itinerary/${inspiredBy._id}`}>{inspiredBy.title}</Link>
+          {inspiredBy.author?.uid && (
+            <>
+              {" "}
+              by{" "}
+              <Link to={`/u/${inspiredBy.author.uid}`}>
+                {inspiredBy.author.name || "TravelEz traveler"}
               </Link>
-            ))}
-          </div>
-        )}
+            </>
+          )}
+        </p>
+      )}
+    </div>
+  );
 
-        {!isOwner && (
-          <div className="detail-actions">
-            <button
-              type="button"
-              className="copy-trip-btn"
-              onClick={handleCopy}
-              disabled={copying}
-            >
-              <Copy size={16} /> {copying ? "Copying..." : "Copy to my trips"}
-            </button>
-            {copyError && <p className="form-error">{copyError}</p>}
-          </div>
-        )}
+  const stats = (
+    <div className="trip-stats">
+      {duration > 0 && (
+        <span>
+          {duration} day{duration !== 1 ? "s" : ""}
+        </span>
+      )}
+      {itinerary.cost > 0 && <span>${Number(itinerary.cost).toLocaleString()}</span>}
+      {averageRating && (
+        <span>
+          <Star size={13} className="star-icon" fill="var(--star)" /> {averageRating}
+        </span>
+      )}
+      {copyCount > 0 && (
+        <span>
+          <Copy size={13} /> Copied {copyCount} time{copyCount !== 1 ? "s" : ""}
+        </span>
+      )}
+    </div>
+  );
 
-        {averageRating && (
-          <p className="detail-rating icon-text">
-            <Star size={20} className="star-icon" fill="var(--star)" /> {averageRating}
-          </p>
-        )}
+  const copyAction = !isOwner && (
+    <>
+      <button type="button" className="trip-copy-btn" onClick={handleCopy} disabled={copying}>
+        <Copy size={18} /> {copying ? "Copying..." : "Copy to my trips"}
+      </button>
+      {copyError && <p className="form-error">{copyError}</p>}
+    </>
+  );
 
-        {copyCount > 0 && (
-          <p className="copy-count icon-text">
-            <Copy size={16} /> Copied {copyCount} time{copyCount !== 1 ? "s" : ""}
-          </p>
-        )}
+  const hasMap = hasLocation || stops.length > 0;
 
-        {itinerary.image && (
+  return (
+    <div className="trip-page">
+      <header className="trip-hero">
+        {hasCover && (
           <img
-            src={optimizedImageUrl(itinerary.image, 1200)}
-            alt={itinerary.title}
-            style={{
-              width: "100%",
-              maxHeight: "400px",
-              objectFit: "cover",
-              borderRadius: "12px",
-              marginBottom: "20px",
-            }}
+            className="trip-hero-photo"
+            src={optimizedImageUrl(itinerary.image, 1920)}
+            alt=""
+            fetchPriority="high"
+            onError={() => setHeroFailed(true)}
           />
         )}
 
-        {itinerary.description && (
-          <>
-            <h2>Trip Overview</h2>
-            <p>{itinerary.description}</p>
-          </>
+        <div className="trip-hero-inner">
+          <p className="trip-hero-destination">{itinerary.destination}</p>
+          <h1>{itinerary.title}</h1>
+
+          {credits}
+          {stats}
+          {copyAction && <div className="trip-copy-inline">{copyAction}</div>}
+        </div>
+      </header>
+
+      <div className={`trip-body ${hasMap ? "" : "trip-body--no-map"}`}>
+        {hasMap && (
+          <aside className="trip-aside">
+            {isStacked && (
+              <button
+                type="button"
+                className="trip-map-toggle"
+                onClick={() => setMapOpen((open) => !open)}
+                aria-expanded={mapOpen}
+              >
+                <MapIcon size={18} /> {mapOpen ? "Hide map" : "Show map"}
+              </button>
+            )}
+
+            {(!isStacked || mapOpen) && (
+              <Suspense fallback={<div className="trip-map trip-map--loading">Loading map...</div>}>
+                <TripMap location={itinerary.location} title={itinerary.destination} stops={stops} />
+              </Suspense>
+            )}
+          </aside>
         )}
 
-        {(hasLocation || stops.length > 0) && (
-          <>
-            <h2>Where</h2>
-            <Suspense fallback={<div className="trip-map trip-map--loading">Loading map...</div>}>
-              <TripMap location={itinerary.location} title={itinerary.destination} stops={stops} />
-            </Suspense>
-          </>
-        )}
+        <div className="trip-main">
+          {itinerary.description && (
+            <section className="trip-section">
+              <h2>Trip Overview</h2>
+              <p>{itinerary.description}</p>
+            </section>
+          )}
 
-        {itinerary.days?.length > 0 && (
-          <>
-            <h2>Day-by-Day Plan</h2>
+          {itinerary.tags?.length > 0 && (
+            <div className="tag-list">
+              {itinerary.tags.map((tag) => (
+                <Link key={tag} to={tagPath(tag)} className="tag-chip tag-chip--static">
+                  {tag}
+                </Link>
+              ))}
+            </div>
+          )}
 
-            {itinerary.days.map((day, index) => (
-              <div className="day-box" key={index}>
-                <h3>Day {index + 1}</h3>
+          {itinerary.days?.length > 0 && (
+            <section className="trip-section">
+              <h2>Day-by-Day Plan</h2>
 
-                {stops.some((stop) => stop.dayIndex === index) && (
-                  <ol className="day-stops">
-                    {stops
-                      .filter((stop) => stop.dayIndex === index)
-                      .map((stop) => (
-                        <li key={stop.number}>
-                          <span
-                            className="day-stop-number"
-                            style={{ background: dayColor(index) }}
-                          >
-                            {stop.number}
-                          </span>
-                          {stop.name}
-                        </li>
-                      ))}
-                  </ol>
-                )}
+              <div className="trip-days">
+                {itinerary.days.map((day, index) => (
+                  <div className="trip-day" key={index}>
+                    <h3>Day {index + 1}</h3>
 
-                {day.activities && (
-                  <p>
-                    <strong>Activities:</strong> {day.activities}
-                  </p>
-                )}
-                {day.restaurants && (
-                  <p>
-                    <strong>Restaurants:</strong> {day.restaurants}
-                  </p>
-                )}
-                {day.transit && (
-                  <p>
-                    <strong>Transit:</strong> {day.transit}
-                  </p>
-                )}
-                {day.hotel && (
-                  <p>
-                    <strong>Hotel:</strong> {day.hotel}
-                  </p>
-                )}
-                {(day.notes || day.other) && (
-                  <p>
-                    <strong>Notes:</strong> {day.notes || day.other}
-                  </p>
-                )}
+                    {stops.some((stop) => stop.dayIndex === index) && (
+                      <ol className="day-stops">
+                        {stops
+                          .filter((stop) => stop.dayIndex === index)
+                          .map((stop) => (
+                            <li key={stop.number}>
+                              <span
+                                className="day-stop-number"
+                                style={{ background: dayColor(index) }}
+                              >
+                                {stop.number}
+                              </span>
+                              {stop.name}
+                            </li>
+                          ))}
+                      </ol>
+                    )}
 
-                <PhotoGallery photos={day.photos} label={`Day ${index + 1}`} />
+                    {[
+                      ["Activities", day.activities],
+                      ["Restaurants", day.restaurants],
+                      ["Transit", day.transit],
+                      ["Hotel", day.hotel],
+                      ["Notes", day.notes || day.other],
+                    ].map(
+                      ([label, value]) =>
+                        value && (
+                          <div className="trip-day-field" key={label}>
+                            <span>{label}</span>
+                            <p>{value}</p>
+                          </div>
+                        )
+                    )}
+
+                    <PhotoGallery photos={day.photos} label={`Day ${index + 1}`} />
+                  </div>
+                ))}
               </div>
-            ))}
-          </>
-        )}
+            </section>
+          )}
 
-        <h2>Trip Information</h2>
+          <section className="trip-section trip-reviews">
+          <h2>Ratings & Comments</h2>
 
-        {duration > 0 && (
-          <p>
-            <strong>Duration:</strong> {duration} day
-            {duration !== 1 ? "s" : ""}
-          </p>
-        )}
+          {!user ? (
+            <div className="review-notice">
+              <p>Sign in to rate and review this itinerary.</p>
+              <button type="button" className="btn-signin" onClick={signInWithGoogle}>
+                Sign in with Google
+              </button>
+            </div>
+          ) : isOwner ? (
+            <p className="review-notice">
+              This is your itinerary, so you can't review it. Reviews from other
+              travelers will show up here.
+            </p>
+          ) : hasReviewed ? (
+            <p className="review-notice">
+              You've reviewed this itinerary. You can edit or delete your review below.
+            </p>
+          ) : (
+          <form className="comment-form" onSubmit={handleAddComment}>
+            <label>
+              Rating
+              <input
+                type="number"
+                min="1"
+                max="5"
+                step="0.1"
+                placeholder="Ex: 4.5"
+                value={newRating}
+                onChange={(e) => setNewRating(e.target.value)}
+                required
+              />
+            </label>
 
-        {itinerary.cost > 0 && (
-          <p>
-            <strong>Estimated Cost:</strong> $
-            {Number(itinerary.cost).toLocaleString()}
-          </p>
-        )}
+            <label>
+              Comment
+              <textarea
+                rows="3"
+                placeholder="Leave a comment about this itinerary..."
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                required
+              />
+            </label>
 
-        <h2>Ratings & Comments</h2>
+            {reviewError && <p className="form-error">{reviewError}</p>}
 
-        {!user ? (
-          <div className="review-notice">
-            <p>Sign in to rate and review this itinerary.</p>
-            <button type="button" className="btn-signin" onClick={signInWithGoogle}>
-              Sign in with Google
+            <button type="submit" disabled={submittingReview}>
+              {submittingReview ? "Posting..." : "Submit Review"}
             </button>
-          </div>
-        ) : isOwner ? (
-          <p className="review-notice">
-            This is your itinerary, so you can't review it. Reviews from other
-            travelers will show up here.
-          </p>
-        ) : hasReviewed ? (
-          <p className="review-notice">
-            You've reviewed this itinerary. You can edit or delete your review below.
-          </p>
-        ) : (
-        <form className="comment-form" onSubmit={handleAddComment}>
-          <label>
-            Rating
-            <input
-              type="number"
-              min="1"
-              max="5"
-              step="0.1"
-              placeholder="Ex: 4.5"
-              value={newRating}
-              onChange={(e) => setNewRating(e.target.value)}
-              required
-            />
-          </label>
+          </form>
+          )}
 
-          <label>
-            Comment
-            <textarea
-              rows="3"
-              placeholder="Leave a comment about this itinerary..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              required
-            />
-          </label>
+          {comments.length === 0 ? (
+            <p>No comments yet. Be the first to leave a review!</p>
+          ) : (
+            comments.map((comment) => {
+              const commentId = comment._id || comment.id;
+              const isEditing = String(editingCommentId) === String(commentId);
+              const isCommentOwner = !!user && user.uid === comment.ownerUid;
 
-          {reviewError && <p className="form-error">{reviewError}</p>}
+              return (
+                <div className="comment" key={commentId}>
+                  {isEditing ? (
+                    <>
+                      <label>
+                        Rating
+                        <input
+                          type="number"
+                          min="1"
+                          max="5"
+                          step="0.1"
+                          value={editRating}
+                          onChange={(e) => setEditRating(e.target.value)}
+                        />
+                      </label>
 
-          <button type="submit" disabled={submittingReview}>
-            {submittingReview ? "Posting..." : "Submit Review"}
-          </button>
-        </form>
-        )}
+                      <label>
+                        Comment
+                        <textarea
+                          rows="3"
+                          value={editComment}
+                          onChange={(e) => setEditComment(e.target.value)}
+                        />
+                      </label>
 
-        {comments.length === 0 ? (
-          <p>No comments yet. Be the first to leave a review!</p>
-        ) : (
-          comments.map((comment) => {
-            const commentId = comment._id || comment.id;
-            const isEditing = String(editingCommentId) === String(commentId);
-            const isCommentOwner = !!user && user.uid === comment.ownerUid;
+                      {editError && <p className="form-error">{editError}</p>}
 
-            return (
-              <div className="comment" key={commentId}>
-                {isEditing ? (
-                  <>
-                    <label>
-                      Rating
-                      <input
-                        type="number"
-                        min="1"
-                        max="5"
-                        step="0.1"
-                        value={editRating}
-                        onChange={(e) => setEditRating(e.target.value)}
-                      />
-                    </label>
-
-                    <label>
-                      Comment
-                      <textarea
-                        rows="3"
-                        value={editComment}
-                        onChange={(e) => setEditComment(e.target.value)}
-                      />
-                    </label>
-
-                    {editError && <p className="form-error">{editError}</p>}
-
-                    <div className="comment-actions">
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateComment(commentId)}
-                      >
-                        Save
-                      </button>
-
-                      <button type="button" onClick={cancelEditingComment}>
-                        Cancel
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <p className="comment-username">
-                      {comment.username || "Anonymous"}
-                    </p>
-                    <p className="icon-text">
-                      <Star size={15} className="star-icon" fill="var(--star)" />{" "}
-                      {Number(comment.rating).toFixed(1)}
-                    </p>
-                    <p>{comment.text}</p>
-                    <small>{new Date(comment.date).toLocaleDateString()}</small>
-
-                    {(isCommentOwner || isAdmin) && (
                       <div className="comment-actions">
-                        {isCommentOwner && (
-                          <button
-                            type="button"
-                            onClick={() => startEditingComment(comment)}
-                          >
-                            Edit
-                          </button>
-                        )}
-
                         <button
                           type="button"
-                          className="comment-delete-btn"
-                          onClick={() => handleDeleteComment(commentId)}
+                          onClick={() => handleUpdateComment(commentId)}
                         >
-                          Delete
+                          Save
+                        </button>
+
+                        <button type="button" onClick={cancelEditingComment}>
+                          Cancel
                         </button>
                       </div>
-                    )}
-                  </>
-                )}
-              </div>
-            );
-          })
-        )}
+                    </>
+                  ) : (
+                    <>
+                      <p className="comment-username">
+                        {comment.username || "Anonymous"}
+                      </p>
+                      <p className="icon-text">
+                        <Star size={15} className="star-icon" fill="var(--star)" />{" "}
+                        {Number(comment.rating).toFixed(1)}
+                      </p>
+                      <p>{comment.text}</p>
+                      <small>{new Date(comment.date).toLocaleDateString()}</small>
+
+                      {(isCommentOwner || isAdmin) && (
+                        <div className="comment-actions">
+                          {isCommentOwner && (
+                            <button
+                              type="button"
+                              onClick={() => startEditingComment(comment)}
+                            >
+                              Edit
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            className="comment-delete-btn"
+                            onClick={() => handleDeleteComment(commentId)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })
+          )}
+          </section>
+
+          {isAdmin && (
+            <button className="btn-admin-delete" onClick={handleAdminDelete}>
+              <Trash2 size={15} /> Admin Delete This Itinerary
+            </button>
+          )}
+        </div>
       </div>
+
+      {copyAction && <div className="trip-copy-bar">{copyAction}</div>}
     </div>
   );
 }

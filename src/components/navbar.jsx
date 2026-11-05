@@ -18,16 +18,16 @@ function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Home's hero photo runs under the navbar, which stays see-through until the
+  // On pages whose photo runs under the navbar, it stays see-through until the
   // page scrolls or the phone menu opens.
-  const isHome = pathname === "/";
-  const overPhoto = isHome && atTop && !menuOpen;
+  const hasFullWidthPhoto = pathname === "/" || pathname.startsWith("/itinerary/");
+  const overPhoto = hasFullWidthPhoto && atTop && !menuOpen;
 
   const name = user?.displayName || "Profile";
 
   return (
     <nav
-      className={`navbar ${menuOpen ? "navbar--open" : ""} ${isHome ? "navbar--home" : ""} ${
+      className={`navbar ${menuOpen ? "navbar--open" : ""} ${hasFullWidthPhoto ? "navbar--overlay" : ""} ${
         overPhoto ? "navbar--over-photo" : ""
       }`}
     >

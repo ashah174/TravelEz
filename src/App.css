@@ -333,7 +333,6 @@ select {
   color: var(--text-muted);
 }
 
-.day-box,
 .comment {
   background: var(--surface-muted);
   padding: 18px;
@@ -967,13 +966,6 @@ select {
   background: var(--accent-soft-hover);
 }
 
-.detail-rating {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text);
-  margin: 10px 0 24px;
-}
-
 .comment-form {
   background: var(--surface-muted);
   padding: 22px;
@@ -1334,8 +1326,7 @@ a.tag-chip--static:hover {
 
 .search-panel-toggle,
 .search-panel-submit,
-.pagination button,
-.copy-trip-btn {
+.pagination button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1353,16 +1344,14 @@ a.tag-chip--static:hover {
 }
 
 .search-panel-submit,
-.pagination button,
-.copy-trip-btn {
+.pagination button {
   border: none;
   background: var(--accent);
   color: var(--on-accent);
 }
 
 .search-panel-submit:hover,
-.pagination button:hover:not(:disabled),
-.copy-trip-btn:hover:not(:disabled) {
+.pagination button:hover:not(:disabled) {
   background: var(--accent-hover);
 }
 
@@ -1439,17 +1428,12 @@ a.tag-chip--static:hover {
   font-weight: 600;
 }
 
-.pagination button:disabled,
-.copy-trip-btn:disabled {
+.pagination button:disabled {
   opacity: 0.5;
   cursor: default;
 }
 
 /* ── Detail page ──────────────────────────────────────────── */
-.detail-actions {
-  margin: 12px 0 20px;
-}
-
 .trip-map {
   height: 320px;
   border-radius: 12px;
@@ -1989,11 +1973,6 @@ img {
   font-size: 0.9rem;
 }
 
-.copy-count {
-  color: var(--text-muted);
-  font-weight: 600;
-}
-
 /* ── Following ────────────────────────────────────────────── */
 .follow-btn {
   display: inline-flex;
@@ -2135,7 +2114,7 @@ img {
   transition: background 0.2s, border-color 0.2s;
 }
 
-.navbar--home {
+.navbar--overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -2680,4 +2659,401 @@ img {
 .trip-card .trip-card-badges > span {
   background: var(--surface-muted);
   color: var(--text-muted);
+}
+
+/* ── Trip page ────────────────────────────────────────────── */
+.trip-hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  box-sizing: border-box;
+  min-height: min(76vh, 700px);
+  padding: 120px 40px 48px;
+  overflow: hidden;
+  background: var(--band);
+  color: var(--on-dark);
+}
+
+.trip-hero-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.trip-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--hero-scrim);
+}
+
+.trip-hero-inner {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  text-shadow: var(--hero-text-shadow);
+}
+
+.trip-hero-destination {
+  margin: 0 0 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.trip-hero h1 {
+  max-width: 760px;
+  margin: 0 0 14px;
+  font-size: clamp(2.4rem, 5.5vw, 4.2rem);
+  line-height: 1.05;
+}
+
+.trip-credits p {
+  margin: 0 0 4px;
+  font-size: 0.92rem;
+}
+
+.trip-credits a {
+  font-weight: 600;
+}
+
+.trip-hero .trip-credits a {
+  color: var(--on-dark);
+}
+
+.trip-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.trip-stats span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.trip-hero .trip-stats span {
+  background: var(--on-dark-subtle);
+  color: var(--on-dark);
+}
+
+.trip-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0;
+  padding: 15px 32px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-shadow: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.trip-copy-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.trip-copy-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.trip-copy-inline {
+  margin-top: 22px;
+}
+
+.trip-hero .trip-copy-btn {
+  background: var(--on-band);
+  color: var(--band);
+}
+
+.trip-hero .trip-copy-btn:hover:not(:disabled) {
+  background: var(--on-dark);
+}
+
+.trip-hero .form-error {
+  color: var(--on-dark);
+}
+
+.trip-copy-bar {
+  display: none;
+}
+
+/* Plan on the left, map staying in view on the right */
+.trip-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 48px;
+  box-sizing: border-box;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 48px 40px 64px;
+}
+
+.trip-body--no-map {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 880px;
+}
+
+.trip-main {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.trip-aside {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+  position: sticky;
+  top: 96px;
+}
+
+.trip-aside .trip-map {
+  height: min(calc(100vh - 130px), 640px);
+  margin-bottom: 0;
+  border-radius: 20px;
+}
+
+.trip-section + .trip-section,
+.tag-list + .trip-section {
+  margin-top: 44px;
+}
+
+.trip-section h2 {
+  margin: 0 0 18px;
+  font-size: 1.7rem;
+}
+
+.trip-days {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.trip-day {
+  position: relative;
+  padding-left: 24px;
+  border-left: 2px solid var(--border);
+}
+
+.trip-day::before {
+  content: "";
+  position: absolute;
+  top: 9px;
+  left: -7px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.trip-day h3 {
+  margin: 0 0 12px;
+  font-size: 1.25rem;
+}
+
+.trip-day-field {
+  margin-bottom: 12px;
+}
+
+.trip-day-field span {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.trip-day-field p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.trip-map-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 13px 18px;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.trip-map-toggle:hover {
+  background: var(--surface-muted);
+}
+
+.trip-main > .btn-admin-delete {
+  margin-top: 40px;
+}
+
+/* Ratings and comments */
+.trip-reviews .comment-form {
+  margin: 0 0 24px;
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.trip-reviews .comment-form input,
+.trip-reviews .comment-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 1rem;
+}
+
+.trip-reviews .comment-form input:focus,
+.trip-reviews .comment-form textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+  outline: none;
+}
+
+.trip-reviews .comment-form button,
+.trip-reviews .review-notice .btn-signin {
+  border-radius: 999px;
+}
+
+.trip-reviews .review-notice {
+  margin: 0 0 24px;
+  border-radius: 20px;
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+.trip-reviews .comment {
+  margin: 0 0 14px;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.trip-reviews .comment input,
+.trip-reviews .comment textarea {
+  box-sizing: border-box;
+}
+
+.trip-reviews .comment-actions button {
+  padding: 7px 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.trip-reviews .comment-actions button:hover {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+.trip-reviews .comment-actions .comment-delete-btn {
+  border-color: var(--danger-soft-hover);
+  background: transparent !important;
+  color: var(--danger-text) !important;
+}
+
+.trip-reviews .comment-actions .comment-delete-btn:hover {
+  background: var(--danger-soft) !important;
+}
+
+@media (max-width: 900px) {
+  .trip-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    padding: 28px 16px 40px;
+  }
+
+  .trip-main,
+  .trip-aside {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .trip-aside {
+    position: static;
+  }
+
+  .trip-aside .trip-map {
+    height: 300px;
+    margin-top: 12px;
+  }
+
+  .trip-copy-inline {
+    display: none;
+  }
+
+  /* Always on screen while reading, above everything but the lightbox. */
+  .trip-copy-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    display: block;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .trip-copy-bar .trip-copy-btn {
+    width: 100%;
+    padding: 14px 20px;
+  }
+
+  .trip-copy-bar .form-error {
+    margin: 0 0 6px;
+    text-align: center;
+  }
+
+  body:has(.trip-copy-bar) .site-footer {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
+
+  .trip-hero {
+    min-height: 62svh;
+    padding: 96px 16px 28px;
+  }
+
+  .trip-hero::after {
+    background: var(--hero-scrim-phone);
+  }
 }
