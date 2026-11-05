@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Tag } from "lucide-react";
 import ItineraryCard from "../components/itinerarycard";
 import TagLinks from "../components/taglinks";
 import { searchItineraries } from "../services/api";
@@ -66,11 +65,10 @@ function TagResults({ tag }) {
 
   return (
     <div className="page">
-      <section className="hero exciting-hero" style={{ marginBottom: "36px" }}>
-        <Tag size={48} className="hero-icon" />
+      <header className="page-head">
         <h1>{heading}</h1>
         <p>{blurb}</p>
-      </section>
+      </header>
 
       <TagLinks current={tag} />
 

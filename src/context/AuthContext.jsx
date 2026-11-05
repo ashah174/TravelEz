@@ -21,10 +21,14 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  // False until Firebase reports who's signed in, so pages don't briefly treat
+  // a signed-in visitor as signed out.
+  const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      setAuthReady(true);
 
       // Make sure the user has a profile so their name shows on their trips.
       if (currentUser) {
@@ -44,7 +48,7 @@ export function AuthProvider({ children }) {
     : false;
 
   return (
-    <AuthContext.Provider value={{ user, signInWithGoogle, logout, isAdmin }}>
+    <AuthContext.Provider value={{ user, authReady, signInWithGoogle, logout, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );

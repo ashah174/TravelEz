@@ -8,7 +8,7 @@ import { DEFAULT_TRIP_IMAGE, optimizedImageUrl } from "../utils/images";
 
 function ItineraryCard({ itinerary, onDelete, showAuthor = true }) {
   const { toggleFavorite, isFavorited, deleteItinerary } = useItineraries();
-  const { isAdmin } = useAuth();
+  const { user, isAdmin, signInWithGoogle } = useAuth();
   const [imageFailed, setImageFailed] = useState(false);
 
   const tripId = itinerary._id || itinerary.id;
@@ -24,6 +24,18 @@ function ItineraryCard({ itinerary, onDelete, showAuthor = true }) {
   const averageRating = formatRating(getAverageRating(itinerary));
   const author = itinerary.author;
   const copyCount = itinerary.copyCount || 0;
+
+  // Favorites belong to an account, so sign in first, then save the trip.
+  const handleFavorite = async () => {
+    if (!user) {
+      try {
+        await signInWithGoogle();
+      } catch {
+        return;
+      }
+    }
+    toggleFavorite(itinerary);
+  };
 
   return (
     <article className="trip-card">
@@ -51,7 +63,7 @@ function ItineraryCard({ itinerary, onDelete, showAuthor = true }) {
         <button
           type="button"
           className={`heart-btn ${favorited ? "heart-btn--active" : ""}`}
-          onClick={() => toggleFavorite(itinerary)}
+          onClick={handleFavorite}
           aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
         >
           <Heart size={18} fill={favorited ? "var(--favorite)" : "none"} />

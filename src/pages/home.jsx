@@ -144,7 +144,7 @@ function Home() {
           </div>
 
           {loading ? (
-            <p>Loading itineraries...</p>
+            <p>Loading trips...</p>
           ) : recommended.length > 0 ? (
             <div className="card-grid">
               {recommended.map((trip) => (
@@ -153,7 +153,7 @@ function Home() {
             </div>
           ) : (
             <p className="public-hint">
-              No public itineraries yet. <Link to="/create">Create one</Link> and
+              No public trips yet. <Link to="/create">Create one</Link> and
               share it to see it here.
             </p>
           )}

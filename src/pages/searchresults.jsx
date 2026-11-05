@@ -140,7 +140,9 @@ function SearchResults() {
 
   return (
     <div className="page">
-      <h1>Search Results</h1>
+      <header className="page-head">
+        <h1>{hasFilters ? "Search results" : "Explore trips"}</h1>
+      </header>
 
       <form className="search-panel" onSubmit={handleSubmit}>
         <div className="search-panel-row">
@@ -246,7 +248,7 @@ function SearchResults() {
       <div className="results-meta">
         {!loading && !error && (
           <p>
-            {data.total} itinerar{data.total === 1 ? "y" : "ies"}
+            {data.total} trip{data.total === 1 ? "" : "s"}
             {filters.q ? ` matching "${filters.q}"` : ""}
           </p>
         )}
@@ -293,7 +295,7 @@ function SearchResults() {
           )}
         </>
       ) : (
-        <p>No itineraries match your search. Try removing a filter.</p>
+        <p>No trips match your search. Try removing a filter.</p>
       )}
     </div>
   );

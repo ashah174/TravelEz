@@ -217,62 +217,6 @@ select {
   padding: 40px;
 }
 
-.hero {
-  background: var(--surface);
-  padding: 40px;
-  border-radius: 16px;
-  text-align: center;
-  margin-bottom: 40px;
-  box-shadow: 0 4px 12px var(--shadow);
-}
-
-.exciting-hero {
-  padding: 50px 40px 45px;
-  position: relative;
-  background: linear-gradient(135deg, var(--surface), var(--surface-muted));
-  overflow: hidden;
-}
-
-.exciting-hero h1 {
-  margin-top: 0;
-  margin-bottom: 12px;
-  font-size: 3.8rem;
-  color: var(--text);
-}
-
-.exciting-hero h1 span {
-  color: var(--accent-text);
-  border-bottom: 7px solid var(--accent);
-}
-
-.exciting-hero p {
-  margin-bottom: 28px;
-}
-
-.hero h1 {
-  font-size: 40px;
-  margin-bottom: 10px;
-}
-
-.hero-icon {
-  font-size: 3rem;
-  margin-bottom: 10px;
-  color: var(--accent-text);
-}
-
-.search-bar {
-  margin-top: 25px;
-}
-
-.search-bar input {
-  padding: 12px;
-  width: 300px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-
-.search-bar button,
-.save-btn,
 .filters button {
   padding: 12px 18px;
   border: none;
@@ -283,7 +227,6 @@ select {
   margin-left: 8px;
 }
 
-.search-bar button:hover,
 .filters button:hover {
   background: var(--accent-hover);
 }
@@ -331,10 +274,6 @@ select {
   box-shadow: 0 4px 12px var(--shadow);
 }
 
-.subtitle {
-  color: var(--text-muted);
-}
-
 .comment {
   background: var(--surface-muted);
   padding: 18px;
@@ -354,16 +293,6 @@ select {
 }
 
 /* Auth navbar styles */
-.nav-auth {
-  display: flex;
-  align-items: center;
-}
-
-.nav-user {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
 
 .nav-avatar {
   width: 34px;
@@ -382,16 +311,6 @@ select {
   color: var(--text);
   font-size: 0.9rem;
   font-weight: 700;
-}
-
-.nav-username {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--on-accent);
-  max-width: 140px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .btn-signin {
@@ -714,18 +633,6 @@ select {
   margin-bottom: 4px !important;
 }
 
-.my-itineraries-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 32px;
-}
-
-.my-itineraries-header h1 {
-  margin: 0 0 4px;
-  color: var(--text);
-}
-
 .create-new-btn {
   display: inline-block;
   padding: 12px 22px;
@@ -761,32 +668,6 @@ select {
   margin-top: 20px;
 }
 
-.my-itineraries-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 28px;
-}
-
-.my-itinerary-card {
-  background: var(--surface);
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 4px 16px var(--shadow);
-  display: flex;
-  flex-direction: column;
-}
-
-.my-card-image-wrap {
-  position: relative;
-}
-
-.my-card-image-wrap img {
-  width: 100%;
-  height: 190px;
-  object-fit: cover;
-  display: block;
-}
-
 .privacy-badge {
   position: absolute;
   top: 12px;
@@ -808,28 +689,6 @@ select {
 .badge-private {
   background: var(--surface-muted);
   color: var(--text-muted);
-}
-
-.my-card-content {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1;
-}
-
-.my-card-content h3 {
-  margin: 0 0 2px;
-  font-size: 1.15rem;
-  color: var(--text);
-}
-
-.my-card-meta {
-  display: flex;
-  gap: 14px;
-  font-size: 0.9rem;
-  color: var(--text-muted);
-  margin: 4px 0;
 }
 
 .trip-desc {
@@ -1634,36 +1493,17 @@ img {
     padding: 20px 16px;
   }
 
-  .hero,
-  .exciting-hero {
-    padding: 32px 18px;
-    margin-bottom: 28px;
-  }
+  
 
-  .exciting-hero h1,
-  .hero h1 {
-    font-size: 2.1rem;
-    overflow-wrap: anywhere;
-  }
+  
 
-  .exciting-hero h1 span {
-    border-bottom-width: 4px;
-  }
+  
 
-  .search-bar {
-    display: flex;
-    gap: 8px;
-  }
+  
 
-  .search-bar input {
-    width: auto;
-    flex: 1;
-    min-width: 0;
-  }
+  
 
-  .search-bar button {
-    margin-left: 0;
-  }
+  
 
   .filters {
     display: flex;
@@ -1687,13 +1527,9 @@ img {
     justify-content: center;
   }
 
-  .my-itineraries-header {
-    flex-wrap: wrap;
-    gap: 12px;
-  }
+  
 
   .my-card-actions,
-  .my-card-meta,
   .comment-actions {
     flex-wrap: wrap;
   }
@@ -3161,4 +2997,190 @@ img {
   body:has(.trip-copy-bar) .site-footer {
     padding-bottom: 116px;
   }
+}
+
+/* ── Page headings ────────────────────────────────────────── */
+.page-head {
+  margin-bottom: 28px;
+}
+
+.page-head h1 {
+  margin: 0 0 8px;
+  font-size: clamp(2.2rem, 5vw, 3.2rem);
+  line-height: 1.1;
+}
+
+.page-head p {
+  max-width: 640px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 1.05rem;
+}
+
+.page-head--row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+}
+
+/* ── Sort buttons: only the selected one is filled ────────── */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filters button {
+  margin: 0;
+  padding: 8px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.filters button:hover {
+  background: var(--surface-muted);
+}
+
+.filters button.filter-active,
+.filters button.filter-active:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: none;
+}
+
+/* ── Pill buttons everywhere ──────────────────────────────── */
+.search-panel-toggle,
+.search-panel-submit,
+.pagination button,
+.create-new-btn,
+.submit-itinerary-btn,
+.view-schedule-btn,
+.edit-itinerary-btn,
+.privacy-toggle-btn,
+.delete-btn,
+.remove-day-btn,
+.edit-profile-btn,
+.cancel-profile-btn,
+.comment-form button,
+.btn-admin-delete,
+.add-day-btn,
+.profile-card .btn-signin,
+.profile-card .btn-signout {
+  border-radius: 999px;
+}
+
+.btn-signin {
+  font-family: inherit;
+}
+
+.empty-state .btn-signin {
+  margin: 20px 0 0;
+  padding: 12px 24px;
+}
+
+.empty-create-btn {
+  padding: 13px 26px;
+  font-size: 1rem;
+}
+
+/* ── Create form ──────────────────────────────────────────── */
+.form-section-label--days {
+  margin-top: 12px;
+}
+
+.form-notice {
+  margin: 0;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: var(--accent-soft);
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+/* ── My Trips cards ───────────────────────────────────────── */
+.my-trip-card .trip-card-details {
+  flex: 1;
+}
+
+.my-trip-card .privacy-badge {
+  z-index: 2;
+}
+
+.my-trip-card .trip-desc {
+  margin-top: 10px;
+}
+
+.my-trip-card .view-schedule-btn {
+  margin-top: 12px;
+}
+
+.my-trip-card .my-card-actions {
+  flex-wrap: wrap;
+  margin-top: 0;
+}
+
+.my-trip-card .delete-btn {
+  margin-left: 0;
+}
+
+@media (hover: hover) {
+  .my-trip-card:hover {
+    transform: none;
+  }
+}
+
+/* ── Profile ──────────────────────────────────────────────── */
+.profile-img--placeholder,
+.public-profile .profile-img--placeholder {
+  display: grid;
+  place-items: center;
+  line-height: 1;
+}
+
+.profile-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-top: 36px;
+}
+
+.profile-section-head h2 {
+  margin: 0 0 14px;
+}
+
+.profile-empty {
+  color: var(--text-muted);
+}
+
+.profile-admin-label {
+  color: var(--danger-text);
+  font-weight: 700;
+}
+
+.profile-card .edit-profile-btn {
+  margin-top: 28px;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.profile-card .cancel-profile-btn {
+  color: var(--text);
+}
+
+.profile-card .btn-signout {
+  border: 1px solid var(--danger-soft-hover);
+  background: transparent;
+  color: var(--danger-text);
+}
+
+.profile-card .btn-signout:hover {
+  background: var(--danger-soft);
 }

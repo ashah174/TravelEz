@@ -164,7 +164,7 @@ function ItineraryDetail() {
       <div className="trip-page">
         <header className="trip-hero">
           <div className="trip-hero-inner">
-            <h1>{loading ? "Loading..." : "Itinerary not found"}</h1>
+            <h1>{loading ? "Loading..." : "Trip not found"}</h1>
           </div>
         </header>
       </div>
@@ -207,7 +207,7 @@ function ItineraryDetail() {
       navigate(`/edit-itinerary/${response.data._id}`);
     } catch (error) {
       console.error("Error copying itinerary:", error);
-      setCopyError("Couldn't copy this itinerary. Please try again.");
+      setCopyError("Couldn't copy this trip. Please try again.");
       setCopying(false);
     }
   };
@@ -391,19 +391,19 @@ function ItineraryDetail() {
 
           {!user ? (
             <div className="review-notice">
-              <p>Sign in to rate and review this itinerary.</p>
+              <p>Sign in to rate and review this trip.</p>
               <button type="button" className="btn-signin" onClick={signInWithGoogle}>
                 Sign in with Google
               </button>
             </div>
           ) : isOwner ? (
             <p className="review-notice">
-              This is your itinerary, so you can't review it. Reviews from other
+              This is your trip, so you can't review it. Reviews from other
               travelers will show up here.
             </p>
           ) : hasReviewed ? (
             <p className="review-notice">
-              You've reviewed this itinerary. You can edit or delete your review below.
+              You've reviewed this trip. You can edit or delete your review below.
             </p>
           ) : (
           <form className="comment-form" onSubmit={handleAddComment}>
@@ -425,7 +425,7 @@ function ItineraryDetail() {
               Comment
               <textarea
                 rows="3"
-                placeholder="Leave a comment about this itinerary..."
+                placeholder="Leave a comment about this trip..."
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 required
@@ -530,7 +530,7 @@ function ItineraryDetail() {
 
           {isAdmin && (
             <button className="btn-admin-delete" onClick={handleAdminDelete}>
-              <Trash2 size={15} /> Admin Delete This Itinerary
+              <Trash2 size={15} /> Admin Delete This Trip
             </button>
           )}
         </div>

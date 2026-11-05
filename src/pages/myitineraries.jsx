@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Globe,
   Lock,
+  MapPin,
   Trash2,
   BookOpen,
   Pencil,
@@ -15,6 +16,8 @@ import {
   NotebookPen,
 } from "lucide-react";
 import { useItineraries } from "../context/ItineraryContext";
+import { useAuth } from "../context/AuthContext";
+import { DEFAULT_TRIP_IMAGE, optimizedImageUrl } from "../utils/images";
 
 function DaySchedule({ days }) {
   if (!days || days.length === 0) return null;
@@ -72,6 +75,8 @@ function DaySchedule({ days }) {
 
 function ItineraryCard({ trip, onTogglePrivacy, onDelete, onEdit }) {
   const [expanded, setExpanded] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
+  const hasImage = !!trip.image && trip.image !== DEFAULT_TRIP_IMAGE && !imageFailed;
 
   const tripId = trip._id || trip.id;
 
@@ -88,9 +93,21 @@ function ItineraryCard({ trip, onTogglePrivacy, onDelete, onEdit }) {
     );
 
   return (
-    <div className="my-itinerary-card">
-      <div className="my-card-image-wrap">
-        <img src={trip.image} alt={trip.destination} />
+    <article className="trip-card my-trip-card">
+      <div className="trip-card-media">
+        {hasImage ? (
+          <img
+            src={optimizedImageUrl(trip.image, 800)}
+            alt=""
+            loading="lazy"
+            onError={() => setImageFailed(true)}
+          />
+        ) : (
+          <div className="trip-card-fallback">
+            <MapPin size={28} />
+            <span>{trip.destination}</span>
+          </div>
+        )}
 
         <span
           className={`privacy-badge ${
@@ -109,11 +126,15 @@ function ItineraryCard({ trip, onTogglePrivacy, onDelete, onEdit }) {
         </span>
       </div>
 
-      <div className="my-card-content">
-        <h3>{trip.title}</h3>
-        <p className="subtitle">{trip.destination}</p>
+      <div className="trip-card-details">
+        <p className="trip-card-destination">{trip.destination}</p>
+        <h3>
+          <Link to={`/itinerary/${tripId}`} className="trip-card-link">
+            {trip.title}
+          </Link>
+        </h3>
 
-        <div className="my-card-meta">
+        <div className="trip-card-badges">
           {trip.duration > 0 && (
             <span>
               {trip.duration} day{trip.duration !== 1 ? "s" : ""}
@@ -174,42 +195,55 @@ function ItineraryCard({ trip, onTogglePrivacy, onDelete, onEdit }) {
           </button>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 
 function MyItineraries() {
   const { myItineraries, togglePrivacy, deleteItinerary } = useItineraries();
   const navigate = useNavigate();
+  const { user, authReady, signInWithGoogle } = useAuth();
 
   return (
     <div className="page">
-      <div className="my-itineraries-header">
+      <header className="page-head page-head--row">
         <div>
-          <h1>My Itineraries</h1>
-          <p className="subtitle">
-            {myItineraries.length} itinerar
-            {myItineraries.length === 1 ? "y" : "ies"} saved
-          </p>
+          <h1>My Trips</h1>
+          {user && (
+            <p>
+              {myItineraries.length} trip{myItineraries.length === 1 ? "" : "s"} saved
+            </p>
+          )}
         </div>
 
-        <Link to="/create" className="create-new-btn">
-          + Create New
-        </Link>
-      </div>
+        {user && (
+          <Link to="/create" className="create-new-btn">
+            + Create New
+          </Link>
+        )}
+      </header>
 
-      {myItineraries.length === 0 ? (
+      {!authReady ? null : !user ? (
         <div className="empty-state">
           <BookOpen size={64} strokeWidth={1.2} />
-          <h2>No itineraries yet</h2>
-          <p>Create your first itinerary and it will appear here.</p>
+          <h2>Sign in to see your trips</h2>
+          <p>Trips you create or copy will be saved here.</p>
+          <button type="button" className="btn-signin" onClick={signInWithGoogle}>
+            Sign in with Google
+          </button>
+        </div>
+      ) : myItineraries.length === 0 ? (
+        <div className="empty-state">
+          <BookOpen size={64} strokeWidth={1.2} />
+          <h2>No trips yet</h2>
+          <p>Create your first trip, or copy one you like, and it will appear here.</p>
 
           <Link to="/create" className="submit-itinerary-btn empty-create-btn">
-            Create Itinerary
+            Create a trip
           </Link>
         </div>
       ) : (
-        <div className="my-itineraries-grid">
+        <div className="card-grid">
           {myItineraries.map((trip) => (
             <ItineraryCard
               key={trip._id || trip.id}

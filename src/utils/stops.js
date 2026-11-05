@@ -1,6 +1,6 @@
 // Distinct colors so each day's pins are easy to tell apart on the map.
 export const DAY_COLORS = [
-  "#3d6140",
+  "#004d51",
   "#c26a2e",
   "#3b6ea8",
   "#a23b72",

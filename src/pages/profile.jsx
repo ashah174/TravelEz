@@ -122,7 +122,7 @@ function Profile() {
           <h2>You are not logged in!</h2>
           <p>Please sign in to see your profile.</p>
           <button className="btn-signin" onClick={signInWithGoogle}>
-            Login with Google
+            Sign in with Google
           </button>
         </div>
       </div>
@@ -165,12 +165,18 @@ function Profile() {
   return (
     <div className="page">
       <div className="profile-card">
-        <img
-          className="profile-img"
-          src={optimizedImageUrl(profile.image, 240)}
-          alt={profile.name}
-          referrerPolicy="no-referrer"
-        />
+        {profile.image ? (
+          <img
+            className="profile-img"
+            src={optimizedImageUrl(profile.image, 240)}
+            alt={profile.name}
+            referrerPolicy="no-referrer"
+          />
+        ) : (
+          <div className="profile-img profile-img--placeholder">
+            {(profile.name || user.displayName || "T").charAt(0).toUpperCase()}
+          </div>
+        )}
 
         {isEditing ? (
           <>
@@ -201,7 +207,7 @@ function Profile() {
               />
             </label>
 
-            {error && <p style={{ color: "var(--danger-text)" }}>{error}</p>}
+            {error && <p className="form-error">{error}</p>}
 
             <button
               className="edit-profile-btn"
@@ -232,10 +238,7 @@ function Profile() {
             <p>{profile.preferences || "No travel preferences added yet."}</p>
 
             {isAdmin && (
-              <p
-                className="icon-text"
-                style={{ color: "var(--danger-text)", fontWeight: "bold" }}
-              >
+              <p className="icon-text profile-admin-label">
                 <ShieldCheck size={18} /> Admin Account
               </p>
             )}
@@ -243,7 +246,7 @@ function Profile() {
             <h2>Following</h2>
 
             {following.length === 0 ? (
-              <p style={{ color: "var(--text-muted)" }}>
+              <p className="profile-empty">
                 You aren't following anyone yet. Open a traveler's profile to
                 follow them.
               </p>
@@ -271,19 +274,15 @@ function Profile() {
               </div>
             )}
 
-            <h2>
-              Uploaded Itineraries{" "}
-              <Link
-                to="/my-itineraries"
-                className="icon-text"
-                style={{ fontSize: "14px", fontWeight: "normal" }}
-              >
-                View All <ArrowRight size={14} />
+            <div className="profile-section-head">
+              <h2>My Trips</h2>
+              <Link to="/my-itineraries" className="home-section-link">
+                View all →
               </Link>
-            </h2>
+            </div>
 
             {myItineraries.length === 0 ? (
-              <p style={{ color: "var(--text-muted)" }}>No uploaded itineraries yet.</p>
+              <p className="profile-empty">No trips yet.</p>
             ) : (
               <div className="card-grid">
                 {myItineraries.map((trip) => (
@@ -292,19 +291,15 @@ function Profile() {
               </div>
             )}
 
-            <h2>
-              Saved Itineraries{" "}
-              <Link
-                to="/favorites"
-                className="icon-text"
-                style={{ fontSize: "14px", fontWeight: "normal" }}
-              >
-                View All <ArrowRight size={14} />
+            <div className="profile-section-head">
+              <h2>Favorites</h2>
+              <Link to="/favorites" className="home-section-link">
+                View all →
               </Link>
-            </h2>
+            </div>
 
             {favorites.length === 0 ? (
-              <p style={{ color: "var(--text-muted)" }}>No saved itineraries yet.</p>
+              <p className="profile-empty">No favorites yet.</p>
             ) : (
               <div className="card-grid">
                 {favorites.map((trip) => (
@@ -312,8 +307,6 @@ function Profile() {
                 ))}
               </div>
             )}
-
-            <br />
 
             <button
               className="edit-profile-btn"
