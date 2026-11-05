@@ -52,6 +52,8 @@
     linear-gradient(to top, rgba(4, 39, 44, 0.86) 0%, rgba(4, 39, 44, 0.68) 58%, rgba(4, 39, 44, 0) 80%);
   --hero-text-shadow: 0 1px 14px rgba(4, 39, 44, 0.55);
 
+  --tab-bar-height: 62px;
+
   /* The deep teal band on Home: the same in both modes */
   --band: #004d51;
   --on-band: #fbf6ee;
@@ -3055,5 +3057,108 @@ img {
 
   .trip-hero::after {
     background: var(--hero-scrim-phone);
+  }
+}
+
+/* ── Phone tab bar ────────────────────────────────────────── */
+.tab-bar {
+  display: none;
+}
+
+@media (max-width: 767.98px) {
+  /* Room for the tab bar, which is fixed to the bottom of the screen. */
+  #root {
+    padding-bottom: calc(var(--tab-bar-height) + env(safe-area-inset-bottom));
+  }
+
+  .tab-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    height: calc(var(--tab-bar-height) + env(safe-area-inset-bottom));
+    box-sizing: border-box;
+    padding-bottom: env(safe-area-inset-bottom);
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .tab-bar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 3px;
+    padding-bottom: 8px;
+    color: var(--text-muted);
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .tab-bar-item--active {
+    color: var(--accent-text);
+  }
+
+  .tab-bar-icon {
+    display: flex;
+  }
+
+  .tab-bar-item--raised .tab-bar-icon {
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    margin-top: -24px;
+    box-sizing: border-box;
+    border: 3px solid var(--surface);
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--on-accent);
+    box-shadow: 0 6px 14px var(--accent-shadow);
+  }
+
+  .tab-bar-item--raised.tab-bar-item--active .tab-bar-icon {
+    background: var(--accent-hover);
+  }
+
+  /* The tabs replace the menu. Only the sign-up button stays in the top bar. */
+  .nav-toggle,
+  .nav-links a,
+  .nav-links a.nav-profile,
+  .nav-links .btn-signout {
+    display: none;
+  }
+
+  .navbar {
+    flex-wrap: nowrap;
+  }
+
+  .nav-links {
+    display: flex;
+    flex-basis: auto;
+    flex-direction: row;
+    padding-top: 0;
+  }
+
+  .nav-links .btn-signin {
+    align-self: auto;
+    margin: 0;
+    padding: 8px 16px;
+    font-size: 0.88rem;
+  }
+
+  /* The trip page's Copy bar sits just above the tabs. */
+  .trip-copy-bar {
+    bottom: calc(var(--tab-bar-height) + env(safe-area-inset-bottom));
+    padding-bottom: 32px; /* clears the raised Create button */
+  }
+
+  body:has(.trip-copy-bar) .site-footer {
+    padding-bottom: 116px;
   }
 }
